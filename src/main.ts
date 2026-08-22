@@ -10,10 +10,16 @@ import { i18n } from "./services/i18nService";
 import { windowManager } from "./services/windowManager";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { buildExportContent, ExportFormat, formatExtension, parseModList, resolveImportEntries, suggestedFileName } from "./services/modListIO";
 import type { ModsConfig, ModMetadata, HistoryEntry, ModProfile, ModGroup } from "./types";
 
 class App {
   private detailPanel: ModDetailPanel;
+  /** İçe aktarma akışı — modal kapanınca sıfırlanır */
+  private importState: { path: string; resolved: string[]; missing: string[] } | null = null;
+  /** Dışa aktarma için önbelleklenen ModsConfig.xml (versiyon + expansion bilgisi) */
+  private exportConfig: ModsConfig | null = null;
 
   constructor() {
     debugConsole.init();
@@ -186,6 +192,10 @@ class App {
       this.updatePresetActionButtons();
     });
     i18n.applyI18n();
+    // Ayarlar/SteamCMD penceresinden dil değişince (same-origin localStorage) bu pencereyi de güncelle
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'app_lang') i18n.setLanguage(e.newValue || 'tr');
+    });
 
     // Workspace değişince preset ışıklarını ve aksiyon butonlarını güncelle (senkron durumu)
     modStore.subscribeActiveMods(() => {
@@ -549,23 +559,15 @@ class App {
     menu.style.left = `${Math.min(e.clientX + 5, window.innerWidth - 170)}px`;
     menu.style.top = `${Math.min(e.clientY, window.innerHeight - 140)}px`;
 
-    // Aktifleştir
-    const activateItem = this.menuItem(
-      '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-      i18n.t('preset_activate'),
+    // Dışa Aktar (RimSort / RimPy / ModsConfig.xml / TXT)
+    const exportItem = this.menuItem(
+      '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>',
+      i18n.t('preset_export'),
       () => {
         menu.remove();
-        profileStore.selectProfile(profileName);
-        const profile = profileStore.getProfiles().find(p => p.name === profileName);
-        if (profile) {
-          modStore.loadWorkspaceFromProfile(profile);
-        }
-        const label = document.getElementById("active-profile-label");
-        if (label) label.innerText = `PROFIL: ${profileName.toUpperCase()}`;
-        Toast.show(`${profileName} aktif edildi`, "success");
+        void this.showExportModal(profileName);
       }
     );
-    menu.appendChild(activateItem);
 
     // İsim Değiştir
     const renameItem = this.menuItem(
@@ -584,13 +586,25 @@ class App {
       () => {
         // Çoğalt — kaynağın içeriğini birebir kopyala (eski davranış boş preset üretiyordu)
         const src = profileStore.getProfiles().find(p => p.name === profileName);
+        if (!src) { menu.remove(); return; }
+        const suffix = i18n.t('preset_duplicate_suffix');
+        let base = `${profileName} - ${suffix}`;
+        let candidate = base;
+        let i = 2;
+        while (profileStore.getProfileNames().includes(candidate)) {
+          candidate = `${base} (${i})`;
+          i++;
+        }
         profileStore.addProfile(
-          `${profileName} - KOPYA`,
-          src ? [...src.active_mods] : [],
-          src?.groups ? src.groups.map(g => ({ ...g, modIds: [...g.modIds] })) : [],
-          src?.description
+          candidate,
+          [...src.active_mods],
+          src.groups ? src.groups.map(g => ({ ...g, modIds: [...g.modIds] })) : [],
+          src.description,
+          src.dead_mods ? [...src.dead_mods] : [],
+          src.health
         );
         menu.remove();
+        Toast.show(i18n.t('toast_preset_duplicated').replace('{name}', candidate), "success");
       }
     );
 
@@ -605,6 +619,7 @@ class App {
       true
     );
 
+    menu.appendChild(exportItem);
     menu.appendChild(renameItem);
     menu.appendChild(duplicateItem);
 
@@ -645,6 +660,85 @@ class App {
     item.innerHTML = svg + `<span>${label}</span>`;
     item.addEventListener("click", onClick);
     return item;
+  }
+
+  /** Dışa aktarma modalı — format seç + kaydet (plugin-dialog save + Rust yazma) */
+  private async showExportModal(profileName: string) {
+    const profile = profileStore.getProfiles().find(p => p.name === profileName);
+    if (!profile) return;
+
+    // ModsConfig.xml formatı için mevcut versiyon/expansion bilgisini önbellekle
+    try {
+      const s = settingsStore.getSettings();
+      if (s.rimworld_config_path) {
+        this.exportConfig = await ModService.readModsConfig(s.rimworld_config_path);
+      }
+    } catch { /* yok say — varsayılan expansion listesi kullanılır */ }
+
+    const modCount = (profile.active_mods || []).length;
+    const overlay = document.createElement("div");
+    overlay.className = "industrial-popup-overlay";
+    overlay.innerHTML = `
+      <div class="industrial-popup" style="min-width:480px;">
+        <h3>${i18n.t('preset_export_title')}</h3>
+        <p style="color:#b0b5bd;font-size:11px;font-family:'Courier New',monospace;margin:0 0 14px 0;">${profileName} — ${modCount} ${i18n.t('consistency_mods')}</p>
+        <div class="preset-modal-options">
+          <label class="preset-modal-radio">
+            <input type="radio" name="export-format" value="modsconfig" checked />
+            <span>
+              <span class="preset-radio-title">ModsConfig.xml</span>
+              <span class="preset-radio-sub">${i18n.t('preset_export_modsconfig_sub')}</span>
+            </span>
+          </label>
+          <label class="preset-modal-radio">
+            <input type="radio" name="export-format" value="rimsort" />
+            <span>
+              <span class="preset-radio-title">RimSort (.rmod)</span>
+              <span class="preset-radio-sub">${i18n.t('preset_export_rimsort_sub')}</span>
+            </span>
+          </label>
+          <label class="preset-modal-radio">
+            <input type="radio" name="export-format" value="rimpy" />
+            <span>
+              <span class="preset-radio-title">RimPy (.json)</span>
+              <span class="preset-radio-sub">${i18n.t('preset_export_rimpy_sub')}</span>
+            </span>
+          </label>
+          <label class="preset-modal-radio">
+            <input type="radio" name="export-format" value="txt" />
+            <span>
+              <span class="preset-radio-title">Plain Text (.txt)</span>
+              <span class="preset-radio-sub">${i18n.t('preset_export_txt_sub')}</span>
+            </span>
+          </label>
+        </div>
+        <div class="industrial-popup-actions">
+          <button class="btn-cancel" id="export-cancel">${i18n.t('popup_cancel')}</button>
+          <button class="btn-confirm" id="export-confirm">${i18n.t('preset_export')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector("#export-cancel")?.addEventListener("click", close);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+
+    overlay.querySelector("#export-confirm")?.addEventListener("click", async () => {
+      const fmt = (overlay.querySelector('input[name="export-format"]:checked') as HTMLInputElement)?.value as ExportFormat || "txt";
+      close();
+      try {
+        const content = buildExportContent(profile, fmt, this.exportConfig || undefined);
+        const path = await save({
+          defaultPath: suggestedFileName(profile.name, fmt),
+          filters: [{ name: fmt.toUpperCase(), extensions: [formatExtension(fmt)] }]
+        });
+        if (!path) return; // kullanıcı iptal etti
+        await ModService.writeTextFile(path, content);
+        Toast.show(i18n.t('toast_preset_exported').replace('{name}', profileName), "success");
+      } catch (err: any) {
+        Toast.show(`${i18n.t('toast_export_failed')}: ${err?.message || err}`, "error");
+      }
+    });
   }
 
   private showRenamePopup(profileName: string) {
@@ -740,7 +834,18 @@ class App {
                   <span class="preset-radio-sub">${i18n.t('preset_modal_source_empty_sub')}</span>
                 </span>
               </label>
+              <label class="preset-modal-radio">
+                <input type="radio" name="preset-source" value="import" />
+                <span>
+                  <span class="preset-radio-title">${i18n.t('preset_modal_source_import')}</span>
+                  <span class="preset-radio-sub">${i18n.t('preset_modal_source_import_sub')}</span>
+                </span>
+              </label>
             </div>
+          </div>
+          <div class="preset-modal-field" id="preset-modal-import-field" style="display:none;">
+            <button type="button" class="preset-import-btn" id="preset-modal-import-btn">${i18n.t('preset_import_file_btn')}</button>
+            <div class="preset-import-info" id="preset-modal-import-info"></div>
           </div>
           <div class="preset-modal-field">
             <label for="preset-modal-desc">${i18n.t('preset_modal_desc')}</label>
@@ -757,11 +862,53 @@ class App {
     const nameInput = overlay.querySelector("#preset-modal-name") as HTMLInputElement;
     nameInput.focus();
 
-    const close = () => overlay.remove();
+    const close = () => {
+      this.importState = null;
+      overlay.remove();
+    };
     const getSource = (): string =>
       (overlay.querySelector('input[name="preset-source"]:checked') as HTMLInputElement)?.value || "current";
 
     overlay.querySelector("#preset-modal-cancel")?.addEventListener("click", close);
+
+    // İçe aktarma seçeneği seçilince dosya alanını göster
+    overlay.querySelectorAll<HTMLInputElement>('input[name="preset-source"]').forEach((r) =>
+      r.addEventListener("change", () => {
+        const field = overlay.querySelector("#preset-modal-import-field") as HTMLElement | null;
+        if (field) field.style.display = getSource() === "import" ? "block" : "none";
+      })
+    );
+
+    // Dosya seç + parse + kurulu modlarla eşleştir
+    overlay.querySelector("#preset-modal-import-btn")?.addEventListener("click", async () => {
+      try {
+        const file = await open({
+          multiple: false,
+          filters: [{ name: i18n.t('preset_import_filter'), extensions: ["rws", "rmod", "json", "txt", "xml"] }]
+        });
+        if (typeof file !== "string") return;
+        const content = await ModService.readTextFile(file);
+        const ext = (file.split(".").pop() || "").toLowerCase();
+        const entries = parseModList(content, ext);
+        if (entries.length === 0) {
+          Toast.show(i18n.t('preset_import_empty'), "warning");
+          return;
+        }
+        const { resolved, missing } = resolveImportEntries(entries, modStore.getMods());
+        this.importState = { path: file, resolved, missing };
+        const info = overlay.querySelector("#preset-modal-import-info") as HTMLElement | null;
+        if (info) {
+          info.innerHTML = `
+            <span style="color:#34d399;">✓ ${resolved.length} ${i18n.t('preset_import_match')}</span>
+            ·
+            <span style="color:#f9a825;">✗ ${missing.length} ${i18n.t('preset_import_missing')}</span>
+            <span style="display:block;color:#64748b;margin-top:4px;">${file.split(/[\\/]/).pop()}</span>`;
+        }
+      } catch (err: any) {
+        Toast.show(`${i18n.t('preset_import_read_error')}: ${err?.message || err}`, "error");
+      }
+    });
+
     overlay.querySelector("#preset-modal-confirm")?.addEventListener("click", () => {
       const name = nameInput.value.trim();
       if (!name) {
@@ -779,6 +926,10 @@ class App {
 
       let mods: string[];
       let groups: ModGroup[];
+      let deadMods: string[] = [];
+      let health: "normal" | "has_kayip" | "bozuk" = "normal";
+      let finalDesc = desc;
+
       if (source === "default") {
         const def = profileStore.getProfiles().find(p => p.isDefault);
         mods = def ? [...def.active_mods] : [];
@@ -786,13 +937,24 @@ class App {
       } else if (source === "empty") {
         mods = [];
         groups = [];
+      } else if (source === "import") {
+        if (!this.importState) {
+          Toast.show(i18n.t('preset_import_no_file'), "error");
+          return;
+        }
+        mods = [...this.importState.resolved];
+        groups = [];
+        deadMods = [...this.importState.missing];
+        health = deadMods.length > 0 ? "has_kayip" : "normal";
+        const fname = this.importState.path.split(/[\\/]/).pop() || this.importState.path;
+        finalDesc = desc || `${i18n.t('preset_import_desc')}: ${fname}`;
       } else {
         // current (varsayılan)
         mods = modStore.getActiveProfileMods();
         groups = modStore.getGroupsForProfile();
       }
 
-      profileStore.addProfile(name, mods, groups, desc);
+      profileStore.addProfile(name, mods, groups, finalDesc, deadMods, health);
       close();
       Toast.show(i18n.t('toast_preset_created').replace('{name}', name), "success");
     });

@@ -1,85 +1,89 @@
 # RimWorld Forge
 
-> RimWorld için masaüstü mod yöneticisi — **Tauri 2 + TypeScript + Rust**.
-> Profiller, akıllı sıralama, SteamCMD atölye entegrasyonu, 6 dil.
+> Desktop mod manager for RimWorld — **Tauri 2 + TypeScript + Rust**.
+> Profiles, smart sorting, SteamCMD workshop integration, 6 languages.
 
-<!-- 📸 LOGO: src-tauri/icons/128x128.png -->
+**🌍 Language:** [🇬🇧 English](README.md) · [🇹🇷 Türkçe](README.tr.md) · [🇩🇪 Deutsch](README.de.md) · [🇫🇷 Français](README.fr.md) · [🇪🇸 Español](README.es.md) · [🇷🇺 Русский](README.ru.md)
 
-## ✨ Özellikler
+> 💡 GitHub shows the localized README based on your browser language. No localized file found? You'll see this English version — pick yours above.
 
-- **Raf tabanlı arayüz** — Kütüphane ↔ Aktif modlar arasında sürükle-bırak
-- **Akıllı sıralama** — RimSort 4-Tier + Kahn algoritması (bağımlılık çözümü, döngü tespiti)
-- **Profiller (Preset)** — Kaydet / Uygula / Çoğalt, Default-Preset ayrımı, sağ tık menüsü
-- **Kayıp mod tespiti** — `bozuk` / `kayıp` sağlık göstergeleri + tek tıkla "Kayıpları Temizle"
-- **Geri Al / İleri Al** — 30 adımlık kalıcı geçmiş (ayarlanabilir)
-- **SteamCMD entegrasyonu** — Workshop'ta keşfet (scrape), toplu indirme kuyruğu, güncelleme
-- **Çok dillilik** — Türkçe, English, Deutsch, Français, Español, Русский
-- **Ayrı pencereler** — SteamCMD ve Ayarlar ayrı pencerelerde
+## ✨ Features
 
-## 📸 Ekran Görüntüleri
+- **Shelf-based UI** — Drag & drop between Library ↔ Active mods
+- **Smart sorting** — RimSort 4-Tier + Kahn's algorithm (dependency resolution, cycle detection)
+- **Profiles (Presets)** — Save / Apply / Duplicate, Default-Preset separation, right-click menu
+- **Preset import / export** — RimSort (.rmod), RimPy (.json), ModsConfig.xml, plain text (.txt)
+- **Missing mod detection** — `broken` / `missing` health indicators + one-click "Clean Missing"
+- **Undo / Redo** — 30-step persistent history (configurable)
+- **SteamCMD integration** — Workshop browse (scrape), batch download queue, updates
+- **Localization** — Türkçe, English, Deutsch, Français, Español, Русский
+- **Separate windows** — SteamCMD and Settings open in their own windows
 
-| Açıklama | Dosya |
+## 📸 Screenshots
+
+| Description | File |
 |---|---|
-| Ana ekran (komut merkezi + raflar + detay paneli) | `docs/screenshots/main.png` |
-| Tutarlılık çakışması modalı | `docs/screenshots/consistency.png` |
-| Preset sağ tık menüsü (Kayıpları Temizle) | `docs/screenshots/preset-menu.png` |
-| SteamCMD — Keşfet + detay galerisi | `docs/screenshots/steamcmd.png` |
-| İndirme kuyruğu + ilerleme | `docs/screenshots/queue.png` |
-| Ayarlar penceresi (dil + yollar) | `docs/screenshots/settings.png` |
+| Main screen (command center + shelves + inspector) | `docs/screenshots/main.png` |
+| Consistency conflict modal | `docs/screenshots/consistency.png` |
+| Preset context menu (Clean Missing) | `docs/screenshots/preset-menu.png` |
+| SteamCMD — Browse + detail gallery | `docs/screenshots/steamcmd.png` |
+| Download queue + progress | `docs/screenshots/queue.png` |
+| Settings window (language + paths) | `docs/screenshots/settings.png` |
 
-<!-- 📸 Görseller henüz eklenmedi: docs/screenshots/ klasörüne koyun. -->
+<!-- 📸 Images not added yet: place them in docs/screenshots/. -->
 
-## 🚀 Kurulum (Geliştirici)
+## 🚀 Setup (Developer)
 
 ```bash
-npm install          # bağımlılıklar
-npm run tauri dev    # geliştirme modu
-npm run build        # yalnızca frontend derleme
-npm run tauri build  # dağıtılabilir NSIS paketi
+npm install          # dependencies
+npm run tauri dev    # development mode
+npm run build        # frontend build only
+npm run tauri build  # distributable NSIS package
 ```
 
-## ⚙️ Gereksinimler
+## ⚙️ Requirements
 
-- **Node.js 18+** ve **Rust (stable)**
-- [Tauri v2 ön koşulları](https://v2.tauri.app/start/prerequisites/) (Windows: WebView2, MSVC)
-- **SteamCMD** (opsiyonel) — indirme/güncelleme için `steamcmd.exe`
-- Steam Workshop verileri **API anahtarı gerektirmeden** (scrape) çekilir
+- **Node.js 18+** and **Rust (stable)**
+- [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/) (Windows: WebView2, MSVC)
+- **SteamCMD** (optional) — `steamcmd.exe` for download/update
+- Steam Workshop data is fetched **without an API key** (scrape)
 
-## 🎮 Kullanım Kılavuzu
+## 🎮 Usage Guide
 
-1. **Yol tespiti** — İlk açılışta RimWorld ve `ModsConfig.xml` yolları otomatik bulunur (Steam / Heroic / özel yol)
-2. **Mod ekleme** — Kütüphaneden aktif rafa sürükle veya çift tıkla
-3. **Sıralama** — Komut merkezi `⤵ SIRALA` butonu veya `BAŞLAT` otomatik sıralar
-4. **Profil** — `+` ile yeni preset; sağ tık ile yönet / "Kayıpları Temizle"
-5. **SteamCMD** — Komut merkezi `[STEAMCMD]` → Keşfet → kart'a tıkla → "Kuyruğa Ekle" → "Seçilenleri İndir"
+1. **Path detection** — On first launch RimWorld and `ModsConfig.xml` paths are auto-detected (Steam / Heroic / custom path)
+2. **Add mods** — Drag from the library to the active shelf or double-click
+3. **Sort** — Command center `⤵ SORT` button, or `LAUNCH` auto-sorts
+4. **Profiles** — `+` creates a new preset; right-click to manage / "Clean Missing"
+5. **SteamCMD** — Command center `[STEAMCMD]` → Browse → click a card → "Add to Queue" → "Download Selected"
 
-## 🧠 Mimari
+## 🧠 Architecture
 
 ```
 src/                → TypeScript (frontend)
   components/       → mod-list, shared
   store/            → modStore, profileStore, settingsStore
   services/         → modService, i18nService, windowManager
-  windows/          → steamcmd, settings (ayrı pencereler)
+  windows/          → steamcmd, settings (separate windows)
 src-tauri/src/      → Rust (backend)
   mod_engine/       → xml_parser, sorter, dependency, fs_watcher
   data_store/       → cache (SQLite), profile (JSON)
-  steamcmd.rs       → SteamCMD indirme/güncelleme (force_install_dir)
-  workshop.rs       → Steam Workshop scrape (arama + detay)
+  steamcmd.rs       → SteamCMD download/update (force_install_dir)
+  workshop.rs       → Steam Workshop scrape (search + details)
 ```
 
 ## 🛠 SteamCMD & Steam Workshop
 
-- **Tarama / görsel / açıklama** → Steam topluluk sayfası **scrape** edilir (anahtar gerektirmez)
-- **İndirme / güncelleme** → `steamcmd +login anonymous +force_install_dir <Mods> +workshop_download_item 294100 <id>`
-  - Modlar **doğrudan** RimWorld `Mods` klasörüne iner (kopyalama adımı yok)
-- `steamcmd.exe` yolunu **Ayarlar → Klasör Yolları**'na ekleyin
+- **Browse / preview / description** → Steam community page is **scraped** (no key required)
+- **Download / update** → `steamcmd +login anonymous +force_install_dir <Mods> +workshop_download_item 294100 <id>`
+  - Mods are downloaded **directly** into the RimWorld `Mods` folder (no copy step)
+- Add the `steamcmd.exe` path in **Settings → Folder Paths**
 
-## 🌍 Çok Dillilik
+## 🌍 Localization
 
-`src/i18n/{tr,en,de,fr,es,ru}.json` — seçilen dil kalıcı saklanır; tüm pencereler anlık güncellenir.
+`src/i18n/{tr,en,de,fr,es,ru}.json` — the selected language is stored persistently; all windows update instantly.
 
-## 📄 Lisans
+## 📄 License
 
 MIT
+
 

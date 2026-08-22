@@ -81,6 +81,16 @@ export class ModService {
     return safeInvoke<any>("import_app_data", { path });
   }
 
+  /** Rastgele bir metin dosyasını okur (preset içe aktarma için) */
+  static async readTextFile(path: string): Promise<string> {
+    return safeInvoke<string>("read_text_file", { path });
+  }
+
+  /** Rastgele bir metin dosyasını yazar (preset dışa aktarma için) */
+  static async writeTextFile(path: string, content: string): Promise<void> {
+    return safeInvoke<void>("write_text_file", { path, content });
+  }
+
   static async downloadMod(modId: string): Promise<void> {
     const { steamcmd_path, rimworld_mods_path } = settingsStore.getSettings();
     if (!steamcmd_path) throw new Error("SteamCMD yolu ayarlı değil (Ayarlar → Klasör Yolları).");
@@ -96,13 +106,23 @@ export class ModService {
   }
 
   /** Steam Workshop'ta arama (topluluk sayfası scrape, anahtar gerektirmez) */
-  static async searchWorkshop(query: string, page = 1): Promise<WorkshopItem[]> {
-    return safeInvoke<WorkshopItem[]>("workshop_search", { query, page });
+  static async searchWorkshop(query: string, page = 1, section = "readytouseitems", sort = "textsearch"): Promise<WorkshopItem[]> {
+    return safeInvoke<WorkshopItem[]>("workshop_search", { query, page, section, sort });
   }
 
   /** Mod detayı + ekran görüntüleri (scrape) */
   static async getWorkshopDetails(id: string): Promise<WorkshopDetails> {
     return safeInvoke<WorkshopDetails>("workshop_details", { id });
+  }
+
+  /** Kurulu bir modun package_id / adı → nümerik workshop ID'sini bulur (güncelleme akışı) */
+  static async workshopResolve(packageId: string, name: string): Promise<string> {
+    return safeInvoke<string>("workshop_resolve", { packageId, name });
+  }
+
+  /** Google Translate (dili otomatik algılar). Erişilemezse hata fırlatır. */
+  static async translateText(text: string, targetLang: string): Promise<string> {
+    return safeInvoke<string>("translate_text", { text, targetLang });
   }
 
   static async validateSorting(mods: ModMetadata[]): Promise<boolean> {

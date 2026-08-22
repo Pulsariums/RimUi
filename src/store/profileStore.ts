@@ -143,8 +143,9 @@ class ProfileStore {
   /**
    * Yeni preset oluştur — varsayılan olarak şu anki çalışma alanını kopyalar.
    * (Boş preset için activeMods/groups parametresiz çağrılır.)
+   * İçe aktarma akışı deadMods/health ile kayıp mod durumunu da taşıyabilir.
    */
-  public addProfile(name: string, activeMods?: string[], groups?: ModGroup[], description?: string): boolean {
+  public addProfile(name: string, activeMods?: string[], groups?: ModGroup[], description?: string, deadMods?: string[], health?: "normal" | "has_kayip" | "bozuk"): boolean {
     if (this.profiles.find(p => p.name === name)) return false;
     const now = Date.now();
     this.profiles.push({
@@ -153,8 +154,8 @@ class ProfileStore {
       description: description || "",
       active_mods: activeMods ? [...activeMods] : [],
       groups: groups ? groups.map(g => ({ ...g, modIds: [...g.modIds] })) : [],
-      dead_mods: [],
-      health: 'normal',
+      dead_mods: deadMods ? [...deadMods] : [],
+      health: health || 'normal',
       history: [],
       isDefault: false,
       created_at: now,

@@ -58,6 +58,26 @@ async fn import_app_data(path: String) -> Result<ImportExportData, String> {
 }
 
 #[tauri::command]
+async fn read_text_file(path: String) -> Result<String, String> {
+    let p = path.clone();
+    tokio::task::spawn_blocking(move || {
+        std::fs::read_to_string(&p).map_err(|e| format!("Dosya okunamadı '{}': {}", p, e))
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+#[tauri::command]
+async fn write_text_file(path: String, content: String) -> Result<(), String> {
+    let p = path.clone();
+    tokio::task::spawn_blocking(move || {
+        std::fs::write(&p, content).map_err(|e| format!("Dosya yazılamadı '{}': {}", p, e))
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+#[tauri::command]
 fn detect_rimworld_paths() -> DetectedPaths {
     let mut detected = DetectedPaths {
         mods_path: None,
@@ -197,6 +217,26 @@ async fn launch_game(path: String) -> Result<(), String> {
     .map_err(|e| format!("Task join error: {}", e))?
 }
 
+#[tauri::command]
+async fn workshop_search(query: String, page: u32, section: String, sort: String) -> Result<Vec<WorkshopItem>, String> {
+    workshop::search_workshop(&query, page, &section, &sort).await
+}
+
+#[tauri::command]
+async fn workshop_details(id: String) -> Result<WorkshopDetails, String> {
+    workshop::get_workshop_details(&id).await
+}
+
+#[tauri::command]
+async fn workshop_resolve(package_id: String, name: String) -> Result<String, String> {
+    workshop::resolve_workshop_id(&package_id, &name).await
+}
+
+#[tauri::command]
+async fn translate_text(text: String, target: String) -> Result<String, String> {
+    workshop::translate_text(&text, &target).await
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}))
@@ -233,11 +273,15 @@ pub fn run() {
             detect_rimworld_paths,
             export_app_data,
             import_app_data,
+            read_text_file,
+            write_text_file,
             check_steamcmd_installed,
             download_mod,
             update_mods,
             workshop_search,
             workshop_details,
+            workshop_resolve,
+            translate_text,
             validate_sorting,
             launch_game,
             delete_mod,
@@ -302,16 +346,6 @@ async fn update_mods(window: tauri::Window, steamcmd_path: String, install_dir: 
    })
    .await
    .map_err(|e| format!("Task join error: {}", e))?
-}
-
-#[tauri::command]
-async fn workshop_search(query: String, page: u32) -> Result<Vec<WorkshopItem>, String> {
-    workshop::search_workshop(&query, page).await
-}
-
-#[tauri::command]
-async fn workshop_details(id: String) -> Result<WorkshopDetails, String> {
-    workshop::get_workshop_details(&id).await
 }
 
 #[tauri::command]

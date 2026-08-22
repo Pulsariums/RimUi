@@ -43,30 +43,48 @@
         <div id="tab-browse" class="scmd-panel">
           <div class="scmd-browse-box">
             <div class="scmd-browse-toolbar">
-              <div class="relative flex-1">
+              <div class="relative flex-1 min-w-[180px]">
                 <input type="text" id="ws-search" data-i18n="scmd_search_ws" placeholder="Workshop'ta ara..." class="w-full bg-slate-900 border border-slate-700/40 px-4 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust/20 rounded pl-10" />
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </span>
               </div>
+              <select id="ws-section" class="ws-sel">
+                <option value="readytouseitems" data-i18n="scmd_sec_mods">MODLAR</option>
+                <option value="translations" data-i18n="scmd_sec_translations">ÇEVİRİLER</option>
+                <option value="collections" data-i18n="scmd_sec_collections">KOLEKSİYONLAR</option>
+                <option value="guides" data-i18n="scmd_sec_guides">REHBERLER</option>
+                <option value="images" data-i18n="scmd_sec_images">EK. GÖRÜNTÜLERİ</option>
+                <option value="videos" data-i18n="scmd_sec_videos">VİDEOLAR</option>
+              </select>
+              <select id="ws-sort" class="ws-sel">
+                <option value="textsearch" data-i18n="scmd_sort_relevance">ALAKA</option>
+                <option value="toprated" data-i18n="scmd_sort_toprated">EN YÜKSEK PUAN</option>
+                <option value="totaluniquesubscribers" data-i18n="scmd_sort_mostsubs">EN ÇOK ABONE</option>
+                <option value="mostrecent" data-i18n="scmd_sort_newest">EN YENİ</option>
+                <option value="mostfavorited" data-i18n="scmd_sort_mostfav">EN ÇOK FAVORİ</option>
+                <option value="trend" data-i18n="scmd_sort_trend">GÜNCEL</option>
+              </select>
               <button id="ws-search-btn" class="px-4 py-2 bg-rust border border-rust/60 text-[10px] font-mono font-bold hover:bg-rust-dark rounded transition-colors text-white whitespace-nowrap" data-i18n="scmd_search_btn">ARA</button>
             </div>
             <div class="flex-1 flex min-h-0">
-              <div id="ws-results" class="flex-1 overflow-y-auto p-2 ws-grid"></div>
-              <aside id="ws-detail" class="w-[380px] shrink-0 border-l border-slate-800 bg-slate-900/40 overflow-y-auto hidden"></aside>
+              <div id="ws-results" class="flex-1 min-w-0 overflow-y-auto p-2 ws-grid"></div>
+            </div>
+            <div id="ws-pagination" class="scmd-pagination hidden">
+              <button id="ws-prev" class="ws-btn" disabled>◀ <span data-i18n="scmd_prev">ÖNCEKİ</span></button>
+              <span id="ws-page-info" class="text-[10px] font-mono text-slate-500">SAYFA 1</span>
+              <button id="ws-next" class="ws-btn" disabled><span data-i18n="scmd_next">SONRAKİ</span> ▶</button>
             </div>
           </div>
         </div>
 
         <div id="tab-queue" class="scmd-panel hidden">
-          <div class="flex items-center justify-between mb-3 shrink-0">
-            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400" data-i18n="scmd_tab_queue">İNDİRME KUYRUĞU</h2>
-            <div class="flex gap-2">
-              <button id="btn-clear-queue" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100" data-i18n="scmd_clear_queue">KUYRUĞU TEMİZLE</button>
-              <button id="btn-download-queue" class="px-4 py-2 bg-emerald-700 border border-emerald-600 text-[10px] font-mono font-bold hover:bg-emerald-600 rounded transition-colors text-white" data-i18n="scmd_download_selected">SEÇİLENLERİ İNDİR</button>
-            </div>
-          </div>
+          <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 mb-3 shrink-0" data-i18n="scmd_tab_queue">İNDİRME KUYRUĞU</h2>
           <div id="queue-list" class="flex-1 overflow-y-auto space-y-2"></div>
+          <div class="flex gap-2 pt-2 shrink-0">
+            <button id="btn-clear-queue" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100" data-i18n="scmd_clear_queue">KUYRUĞU TEMİZLE</button>
+            <button id="btn-download-queue" class="flex-1 px-4 py-2 bg-emerald-700 border border-emerald-600 text-[10px] font-mono font-bold hover:bg-emerald-600 rounded transition-colors text-white" data-i18n="scmd_download_selected">SEÇİLENLERİ İNDİR</button>
+          </div>
         </div>
 
         <div id="tab-updates" class="scmd-panel hidden">
@@ -81,13 +99,28 @@
         </div>
 
         <div id="tab-installed" class="scmd-panel hidden">
-          <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 mb-3 shrink-0" data-i18n="scmd_tab_installed">KURULU MODLAR</h2>
+          <div class="flex items-center justify-between mb-3 shrink-0">
+            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400" data-i18n="scmd_tab_installed">KURULU MODLAR</h2>
+            <button id="btn-resolve-ids" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100" data-i18n="scmd_resolve_ids">WORKSHOP ID ÇÖZ</button>
+          </div>
           <div id="installed-list" class="flex-1 overflow-y-auto space-y-2"></div>
         </div>
       </div>
 
       <!-- İlerleme -->
       <div id="steamcmd-progress" class="hidden shrink-0 mx-3 mb-3 bg-slate-900 border border-slate-800 rounded p-3"></div>
+      <!-- Detay Modalı -->
+      <div id="ws-detail-modal" class="scmd-modal hidden">
+        <div class="scmd-modal-backdrop"></div>
+        <div class="scmd-modal-card">
+          <div class="scmd-modal-head">
+            <span id="ws-detail-modal-title" class="text-sm font-mono font-bold text-slate-200 truncate"></span>
+            <button id="ws-detail-close" class="scmd-modal-close">✕</button>
+          </div>
+          <div id="ws-detail-content" class="scmd-modal-body"></div>
+          <div id="ws-detail-foot" class="scmd-modal-foot"></div>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/windows/steamcmd/main.ts"></script>
   </body>

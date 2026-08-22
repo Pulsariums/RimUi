@@ -22,6 +22,10 @@ class SettingsApp {
       this.activeTab = "";
       if (tab) this.switchTab(tab);
     });
+    // Başka pencereden dil değişirse (ana pencere gibi) bu pencere de güncellensin
+    window.addEventListener("storage", (e) => {
+      if (e.key === "app_lang") i18n.setLanguage(e.newValue || "tr");
+    });
   }
 
   private setupTitleBar() {
