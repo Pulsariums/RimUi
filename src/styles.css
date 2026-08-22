@@ -1,0 +1,1134 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #0a0b0d;
+  --color-steel: #1c1e22;
+  --color-iron: #2d3139;
+  --color-rust: #b35d2d;
+  --color-rust-light: #d17a4d;
+  --color-text-main: #d1d5db;
+  --color-text-muted: #8a8f98;
+  --color-danger: #8b2e2e;
+  --color-success: #4a7a4a;
+  --radius-industrial: 2px;
+  --font-sans: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-mono: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root {
+  /* CSS değişkenleri — @theme üzerinden Tailwind sınıflarıyla da erişilebilir */
+  --color-void: #0a0b0d;
+  --color-steel: #1c1e22;
+  --color-iron: #2d3139;
+  --color-rust: #b35d2d;
+  --color-rust-light: #d17a4d;
+  --color-text-main: #d1d5db;
+  --color-text-muted: #8a8f98;
+  --color-danger: #8b2e2e;
+  --color-success: #4a7a4a;
+  --radius-industrial: 2px;
+  --border-width: 1px;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-text-main);
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Genel Bileşen Resetleri */
+* {
+  box-sizing: border-box;
+}
+
+/* Endüstriyel Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-iron);
+  border: 1px solid var(--color-steel);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-rust);
+}
+
+/* --- PRESET SLOTS VE DINAMIK HOVER GENIŞLEME / BÜKÜLME EFEKTI --- */
+#ui-preset-strip {
+  overflow: visible; /* Butonların dışarı taşabilmesi için şart */
+  position: relative;
+  z-index: 30;
+}
+
+.preset-btn-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.preset-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-industrial);
+  background-color: var(--color-steel);
+  border: 1px solid var(--color-iron);
+  color: var(--color-text-main);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* İçerik sola yaslı */
+  padding-left: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: width 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease;
+}
+
+/* Hover durumunda sağa doğru açılan çubuk ve bükülen çizgi hissi */
+.preset-btn:hover {
+  width: 140px; /* Genişleme üst sınırı */
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+}
+
+/* Butonun içindeki isim alanı */
+.preset-name-tag {
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  margin-left: 8px;
+  font-family: sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.preset-btn:hover .preset-name-tag {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.05s;
+}
+
+/* Çizginin bükülme illüzyonu için maske/arka plan efekti */
+.preset-btn::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background-color: transparent;
+  transition: background-color 0.18s ease;
+}
+
+/* Olay anında sınır bükülmüş gibi sağ kenarda vurgu oluştur */
+.preset-btn:hover::after {
+  background-color: var(--color-rust-light);
+}
+
+/* ========================================
+   Z-INDEX KATMAN HİYERARŞİSİ
+   10   preset-name-tag
+   20   preset hover / command bar
+   30   preset-btn
+   50   title bar
+   100  drag ghost
+   1000 bağlam menüleri (sağ tık, ⋮, grup)
+   1100 toast bildirimleri
+   1200 modal/popup overlay'leri
+   1300 uygulama yükleme ekranı
+   ======================================== */
+
+/* --- ENDÜSTRİYEL BAĞLAM MENÜSÜ (Sağ Tık) --- */
+.industrial-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 160px;
+  background: linear-gradient(180deg, #1c1e22 0%, #15171b 100%);
+  border: 1px solid rgba(179,93,45,0.4);
+  border-radius: 4px;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.6),
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  transform-origin: top;
+  animation: contextMenuExpand 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding: 4px 0;
+}
+
+@keyframes contextMenuExpand {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.context-menu-item {
+  padding: 7px 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b0b5bd;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.08s ease, color 0.08s ease, padding-left 0.08s ease;
+  border-left: 2px solid transparent;
+}
+
+.context-menu-item:hover {
+  background-color: #2b1c12;
+  color: #e8e8e8;
+  padding-left: 18px;
+  border-left-color: var(--color-rust);
+}
+
+.context-menu-item.danger:hover {
+  background-color: #2b1212;
+  color: #ff7a7a;
+  border-left-color: var(--color-danger);
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(179,93,45,0.2), transparent);
+  margin: 3px 8px;
+}
+
+/* --- ENDÜSTRİYEL MODAL (RENAME / DELETE / YENİ PRESET) --- */
+.industrial-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Mikro karartma + arka plan blur — tamamen opak DEĞİL */
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.industrial-popup {
+  min-width: 320px;
+  background: linear-gradient(180deg, #1e2126 0%, #16191e 100%);
+  border: 1px solid rgba(179, 93, 45, 0.22);
+  border-radius: 10px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 4px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 20px 22px 18px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  animation: popupFadeIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popupFadeIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.industrial-popup h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-rust-light);
+  margin: 0 0 16px 0;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.industrial-popup h3::before {
+  content: "";
+  width: 3px;
+  height: 14px;
+  background: var(--color-rust);
+  border-radius: 2px;
+}
+
+.industrial-popup input {
+  width: 100%;
+  background: rgba(10, 11, 13, 0.85);
+  border: 1px solid rgba(69, 73, 82, 0.5);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: #e2e8f0;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  box-sizing: border-box;
+}
+
+.industrial-popup input:focus {
+  border-color: var(--color-rust);
+  box-shadow: 0 0 0 3px rgba(179, 93, 45, 0.15);
+}
+
+.industrial-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.industrial-popup-actions button {
+  padding: 8px 18px;
+  font-size: 10px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.industrial-popup-actions .btn-cancel {
+  background: rgba(45, 49, 57, 0.6);
+  border: 1px solid rgba(69, 73, 82, 0.5);
+  color: #a0a6b0;
+}
+
+.industrial-popup-actions .btn-cancel:hover {
+  background: #2d3139;
+  color: #e2e8f0;
+  border-color: rgba(120, 130, 145, 0.6);
+}
+
+.industrial-popup-actions .btn-confirm {
+  background: var(--color-rust);
+  border: 1px solid var(--color-rust);
+  color: #ffffff;
+}
+
+.industrial-popup-actions .btn-confirm:hover {
+  background: var(--color-rust-light);
+  border-color: var(--color-rust-light);
+  box-shadow: 0 4px 16px rgba(179, 93, 45, 0.35);
+}
+
+/* --- YENİ PRESET MODALI — yapısal alanlar --- */
+.preset-modal {
+  width: 400px;
+  max-width: calc(100vw - 48px);
+}
+.preset-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.preset-modal-field > label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #8a8f98;
+}
+.preset-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.preset-modal-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: #cbd5e1;
+  cursor: pointer;
+  background: rgba(45, 49, 57, 0.35);
+  border: 1px solid rgba(69, 73, 82, 0.4);
+  border-radius: 8px;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.preset-modal-radio:hover {
+  background: rgba(45, 49, 57, 0.7);
+  border-color: rgba(179, 93, 45, 0.4);
+}
+.preset-modal-radio:has(input:checked) {
+  background: rgba(179, 93, 45, 0.12);
+  border-color: var(--color-rust);
+}
+.preset-modal-radio input[type="radio"] {
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  accent-color: var(--color-rust);
+  cursor: pointer;
+}
+.preset-modal-radio > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.preset-radio-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #dbe1e8;
+}
+.preset-radio-sub {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  color: #8a8f98;
+  line-height: 1.35;
+}
+
+/* Tutarlılık çakışması modalı */
+.consistency-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.consistency-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(10, 11, 13, 0.6);
+  border: 1px solid rgba(69, 73, 82, 0.4);
+  border-radius: 6px;
+}
+.consistency-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8f98;
+}
+.consistency-value {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #dbe1e8;
+  font-weight: 600;
+}
+
+/* --- ANIMASYONLAR --- */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Pencere kontrolleri için hover efektleri */
+#ui-title-bar button:hover {
+  filter: brightness(1.2);
+}
+
+/* Grid düzeni için taşma kontrolleri */
+#ui-command-bar {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+#mod-search:focus {
+  box-shadow: 0 0 10px rgba(179, 93, 45, 0.2);
+}
+
+/* --- MOD LİSTESİ RAF PANELLERİ — Fiziksel Derinlik ve Doku --- */
+.mod-shelf {
+  background: linear-gradient(180deg, rgba(28,30,34,0.6) 0%, rgba(20,22,26,0.8) 100%);
+  border: 1px solid rgba(45,49,57,0.6);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 2px 8px rgba(0,0,0,0.3),
+    0 1px 2px rgba(0,0,0,0.2);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mod-shelf:hover {
+  border-color: rgba(179,93,45,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(179,93,45,0.05);
+}
+
+/* Raf başlıkları için endüstriyel metalik çizgi */
+.shelf-header {
+  background: linear-gradient(90deg, rgba(28,30,34,1) 0%, rgba(35,38,44,1) 100%);
+  border-bottom: 1px solid rgba(179,93,45,0.15);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+/* Ayarlar/alt pencerelerde yükleme durumu (JS render öncesi) */
+.settings-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 60vh;
+}
+
+/* --- UYGULAMA YÜKLEME EKRANI (ilk açılış, gerçek ilerleme) --- */
+.app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: radial-gradient(ellipse at center, #1e293b 0%, #020617 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+.app-loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.app-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.app-loading-spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid rgba(179, 93, 45, 0.15);
+  border-top-color: #b35d2d;
+  border-right-color: rgba(179, 93, 45, 0.5);
+  animation: app-spin 0.75s linear infinite;
+  box-shadow: 0 0 18px rgba(179, 93, 45, 0.25);
+}
+@keyframes app-spin {
+  to { transform: rotate(360deg); }
+}
+.app-loading-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.app-loading-title {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: rgba(179, 93, 45, 0.95);
+}
+.app-loading-count {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+.app-loading-bar {
+  width: 220px;
+  height: 3px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.app-loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #7c3a1d, #b35d2d);
+  transition: width 0.2s ease;
+}
+
+/* --- RAF İÇİ PER-PANEL YÜKLEME (tam ekran overlay YOK) --- */
+.shelf-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  min-height: 180px;
+  color: #64748b;
+}
+.shelf-skeleton-text {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(179, 93, 45, 0.85);
+}
+.app-loading-spinner.small {
+  width: 22px;
+  height: 22px;
+  border-width: 2px;
+  box-shadow: none;
+}
+.inspector-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 0;
+}
+.shelf-loading-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 3px;
+  margin-top: 4px;
+}
+.shelf-loading-bar-fill {
+  flex: 1;
+  height: 100%;
+  background: linear-gradient(90deg, #7c3a1d, #b35d2d);
+  transition: width 0.2s ease;
+  width: 0%;
+}
+.shelf-loading-count {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* --- MOD KARTLARI — Endüstriyel Tek Sütun --- */
+.mod-card {
+  position: relative;
+  overflow: visible;
+}
+
+/* ========================================
+   SANALLAŞTIRMA — sürükleme/resize kasmasını önler.
+   content-visibility: auto → tarayıcı SADECE görünür
+   (viewport'a yakın) elemanları render eder; diğerleri
+   hazır bekler ve ekrana yaklaşınca çizilir. Böylece
+   listede yüzlerce mod olsa bile reflow/paint maliyeti
+   yalnızca görünen dilimle sınırlıdır.
+   ======================================== */
+.mod-card,
+.group-header,
+.other-header,
+.shelf-toolbar {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 44px;
+}
+/* Ghost sürüklenirken her zaman görünür olmalı */
+.mod-drag-ghost {
+  content-visibility: visible;
+}
+/* Raf kabı: kendi layout/paint izolasyonu (dış etkileşim → iç reflow yok) */
+#ui-library-shelves,
+#ui-active-shelves {
+  contain: layout paint;
+}
+
+/* Shelf focus çerçevesini kaldır — klavye navigasyonu için focus görünmez kalır */
+.mod-shelf:focus {
+  outline: none;
+}
+
+.mod-card:hover {
+  background: rgba(45,49,57,0.5) !important;
+}
+
+.mod-card:active {
+  background: rgba(179,93,45,0.08) !important;
+}
+
+/* Sürükleme sırasında */
+.mod-card.drag-over {
+  border-color: rgba(179,93,45,0.6);
+}
+
+/* Drop indicator çizgisi */
+.drop-indicator {
+  pointer-events: none;
+  animation: indicatorPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes indicatorPulse {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+/* --- GRUP HEADER — Akordiyon Stili --- */
+.group-header {
+  position: relative;
+  overflow: visible;
+  border-left-width: 2px;
+}
+
+.group-header:hover {
+  background: rgba(45,49,57,0.6) !important;
+  border-left-color: rgba(179,93,45,0.6) !important;
+}
+
+.group-header .arrow-icon {
+  transition: transform 0.15s ease;
+}
+
+.group-header.expanded .arrow-icon {
+  transform: rotate(90deg);
+}
+
+/* --- MOD AKSIYON DROPDOWN --- */
+.mod-actions-dropdown {
+  font-family: 'Courier New', monospace;
+  animation: dropdownFadeIn 0.08s ease-out;
+  transform-origin: top right;
+}
+
+.mod-actions-dropdown.hidden {
+  display: none !important;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- RAF İÇİ LİSTE --- */
+.shelf-list {
+  min-height: 100%;
+}
+
+/* --- SURUKLEME ISARETI (grips) --- */
+.mod-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.mod-card:hover::before {
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(179,93,45,0.3) 0px,
+    rgba(179,93,45,0.3) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+/* --- GRUP KONTEXT MENÜSÜ --- */
+.group-context-menu {
+  font-family: 'Courier New', monospace;
+  animation: dropdownFadeIn 0.08s ease-out;
+  transform-origin: top left;
+}
+
+.group-context-menu .px-3:hover {
+  background-color: rgba(179,93,45,0.12);
+}
+
+/* --- MOD GRUP BÖLÜMÜ (ModItem dropdown) --- */
+.mod-group-section {
+  border-bottom: 1px solid rgba(69,73,82,0.3);
+}
+
+.mod-group-list {
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.mod-group-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mod-group-list::-webkit-scrollbar-thumb {
+  background: rgba(179,93,45,0.3);
+  border-radius: 2px;
+}
+
+/* --- GRUP HEADER AÇ/KAPA GEÇİŞ ANİMASYONU --- */
+.group-header {
+  position: relative;
+  overflow: visible;
+  border-left-width: 2px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.group-header:hover {
+  background: rgba(45,49,57,0.6) !important;
+  border-left-color: rgba(179,93,45,0.6) !important;
+}
+
+/* Grup header ok işareti dönüşümü */
+.group-header .rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Grup header RimSort benzeri ayırıcı çizgi efekti */
+.group-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(179,93,45,0.15), transparent);
+  pointer-events: none;
+}
+
+/* Grup header RimSort benzeri üst çizgi */
+.group-header::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(69,73,82,0.3), transparent);
+  pointer-events: none;
+}
+
+/* — DİĞER MODLAR BAŞLIĞI — */
+.other-mods-header {
+  position: relative;
+}
+
+.other-mods-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(69,73,82,0.2), transparent);
+}
+
+/* --- GRUP OLUŞTUR BUTONU (aktif raf) --- */
+.group-create-btn {
+  font-family: 'Courier New', monospace;
+}
+
+.group-create-btn:hover {
+  background-color: rgba(179,93,45,0.1);
+  border-color: rgba(179,93,45,0.3);
+  color: #e8e8e8;
+}
+
+/* --- GRUP İÇİ MOD KARTLARI — alt çizgi efekti --- */
+.group-inner-mod {
+  border-left: 2px solid rgba(179,93,45,0.08);
+}
+.group-inner-mod:hover {
+  border-left-color: rgba(179,93,45,0.3);
+}
+
+/* ========================================
+   FAZ 1: SÜRÜKLEME + RENDER OPTİMİZASYONU
+   ======================================== */
+
+/* Ghost element — sürüklenen modun görsel kopyası */
+.mod-drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 100;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  transition: none;
+}
+
+/* Drop zone highlight — rafın tamamı */
+.mod-shelf.shelf-drag-over {
+  background: #0b1c33;
+  border: 2px dashed #4285f4;
+  border-radius: 8px;
+}
+
+/* Drop indicator — modlar arasındaki ince çizgi */
+.drop-indicator {
+  height: 2px;
+  background: #4285f4;
+  border-radius: 1px;
+  margin: 1px 8px;
+  pointer-events: none;
+  animation: dropIndicatorPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes dropIndicatorPulse {
+  from { opacity: 0.4; box-shadow: 0 0 2px rgba(66,133,244,0.3); }
+  to   { opacity: 1;   box-shadow: 0 0 8px rgba(66,133,244,0.6); }
+}
+
+/* Sürüklenen modun orijinal yerinde görünümü (şeffaflık yok) */
+.mod-being-dragged {
+  opacity: 1;
+}
+
+/* Mod item drag-over highlight */
+.mod-card.drag-over {
+  border-top: 2px solid #4285f4;
+  background: #0d1f3a;
+}
+
+/* Grup daraltma animasyonu */
+.mod-group-body {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+.mod-group-body.mod-group-collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Raf sürükleme sırasında imleç */
+.mod-shelf.dragging {
+  cursor: grabbing;
+}
+
+/* Touch sürükleme için seçim engelleme */
+.mod-shelf * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Ghost element içindeki metinlerin okunabilirliği */
+.mod-drag-ghost .mod-status-badge,
+.mod-drag-ghost .text-[8px],
+.mod-drag-ghost .text-[9px],
+.mod-drag-ghost .text-[10px],
+.mod-drag-ghost .text-[11px] {
+  color: inherit;
+}
+
+/* ========================================
+   FAZ 3: MOD DETAY PANELI + PREVIEW + DLC
+   ======================================== */
+
+/* Preview image container */
+.mod-preview-container {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(15, 17, 20, 0.8);
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.mod-preview-empty {
+  display: none;
+}
+
+.mod-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* DLC badge (detay panelinde) */
+.dlc-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #1a73e8, #4285f4);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  line-height: 1.3;
+}
+
+/* DLC modları için farklı renk (mod listesinde) */
+.mod-card.mod-is-dlc {
+  border-left: 3px solid #4285f4 !important;
+}
+
+.mod-card.mod-is-dlc .mod-name::after {
+  content: 'DLC';
+  font-size: 10px;
+  background: #4285f4;
+  color: white;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ========================================
+   FAZ 4: HARİCİ KAYNAK (EXTERNAL MOD)
+   ======================================== */
+
+/* Harici kaynaktan gelen modlar - sarı/turuncu sol kenar çizgisi */
+.mod-card.mod-is-external {
+  border-left: 3px solid #f9a825 !important;
+  background: rgba(249, 168, 37, 0.04);
+}
+
+.mod-card.mod-is-external:hover {
+  background: rgba(249, 168, 37, 0.08) !important;
+}
+
+/* Harici kaynak rozeti */
+.mod-source-badge {
+  display: inline-block;
+  font-size: 9px;
+  background: #f9a825;
+  color: #1a1a2e;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+/* Çoklu Seçim Mod Kartı Görseli */
+.mod-card.mod-is-selected {
+  background: rgba(66, 133, 244, 0.12) !important;
+  border-left-color: #4285f4 !important;
+  box-shadow: inset 0 0 0 1px rgba(66, 133, 244, 0.2);
+}
+
+.mod-card.mod-is-selected:hover {
+  background: rgba(66, 133, 244, 0.18) !important;
+}
+
+/* Preset Sağlık Göstergesi Görünümü */
+.preset-btn:hover .preset-health-dot {
+  display: block !important;
+}
+
+/* ========================================
+   FAZ 2.5: SILINEN MOD GOSTERIMI
+   ======================================== */
+
+.mod-card.mod-is-dead {
+  opacity: 0.6;
+  border-left: 3px solid #8b2e2e !important;
+}
+
+.mod-card.mod-is-dead .mod-name {
+  text-decoration: line-through;
+  color: #8b2e2e;
+}
+
+/* ========================================
+   FAZ 3: SHELF SEARCH INPUT
+   ======================================== */
+
+.shelf-search-input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  background: rgba(30, 32, 40, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+  border-radius: 3px;
+  color: #cbd5e1;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.shelf-search-input::placeholder {
+  color: rgba(100, 116, 139, 0.6);
+}
+
+.shelf-search-input:focus {
+  border-color: rgba(179, 93, 45, 0.6);
+  background: rgba(30, 32, 40, 1);
+}
+
+.shelf-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 18L18 6M6 6l12 12'/%3E%3C/svg%3E") center/contain no-repeat;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.shelf-search-input::-webkit-search-cancel-button:hover {
+  opacity: 1;
+}
+
+/* ========================================
+   LOTTIE İKON KONTEYNERLERİ
+   ======================================== */
+.lottie-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  color: inherit;
+  line-height: 0;
+}
+
+.lottie-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ayarlar paneli tespit butonu yardımcıları */
+.detect-spinner,
+.detect-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.detect-label {
+  vertical-align: middle;
+}
+
+/* ========================================
+   AYARLAR PENCERESİ — AKTİF SEKME VURGUSU
+   ======================================== */
+.settings-tab.active {
+  border-left: 2px solid var(--color-rust);
+  background: rgba(179, 93, 45, 0.12);
+  color: #e8e8e8;
+}

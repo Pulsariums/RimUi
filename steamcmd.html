@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RimWorld Forge - SteamCMD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden">
+    <div id="app-shell" class="flex flex-col h-screen w-screen overflow-hidden">
+      
+      <!-- Pencere Başlık Çubuğu -->
+      <div id="ui-title-bar" class="flex h-8 bg-slate-950 border-b border-slate-900 shrink-0 select-none z-50">
+        <div data-tauri-drag-region class="flex-1 flex items-center px-3 cursor-move">
+          <span class="pointer-events-none text-[9px] font-mono font-bold tracking-[0.2em] text-rust">RIMWORLD_FORGE // STEAMCMD</span>
+        </div>
+        <div class="flex items-center space-x-1 px-3 shrink-0">
+          <button id="btn-window-min" class="p-1 text-slate-600 hover:text-white hover:bg-slate-800 rounded-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14" /></svg>
+          </button>
+          <button id="btn-window-max" class="p-1 text-slate-600 hover:text-white hover:bg-slate-800 rounded-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h16v4M4 16v4h16v-4" /></svg>
+          </button>
+          <button id="btn-window-close" class="p-1 text-slate-600 hover:text-red-500 hover:bg-red-500/20 rounded-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- İçerik -->
+      <div id="app-content" class="flex flex-col flex-1 overflow-hidden p-4 bg-slate-950">
+        
+        <!-- Arama + Filtreleme Üst Çubuğu -->
+        <div class="flex items-center space-x-3 mb-4 shrink-0">
+          <div class="relative flex-1">
+            <input type="text" id="mod-search-input" placeholder="Mod adı veya ID ile ara..." class="w-full bg-slate-900 border border-slate-700/40 px-4 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500/20 rounded transition-all pl-10" />
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+          </div>
+          <!-- Sıralama seçimi -->
+          <select id="sort-select" class="bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500">
+            <option value="name">İsim A-Z</option>
+            <option value="name-desc">İsim Z-A</option>
+            <option value="id">ID A-Z</option>
+            <option value="id-desc">ID Z-A</option>
+          </select>
+          <!-- Filtre durumu -->
+          <select id="filter-select" class="bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500">
+            <option value="all">Tümü</option>
+            <option value="downloaded">İndirilmiş</option>
+            <option value="pending">Bekleyen</option>
+          </select>
+        </div>
+
+        <!-- Mod Listesi -->
+        <div id="mod-list-container" class="flex-1 overflow-y-auto bg-slate-900 border border-slate-800 rounded overflow-hidden">
+          <!-- Dinamik mod listesi -->
+          <div id="mod-list-content"></div>
+        </div>
+
+      </div>
+    </div>
+    <script type="module" src="/src/windows/steamcmd/main.ts"></script>
+  </body>
+</html>
