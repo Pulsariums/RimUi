@@ -23,7 +23,7 @@ impl SteamCmdManager {
         Path::new(&self.executable_path).exists()
     }
 
-    pub fn download_mod(&self, window: tauri::Window, mod_id: String, _install_dir: String) -> Result<String, String> {
+    pub fn download_mod(&self, window: tauri::Window, mod_id: String, install_dir: String) -> Result<String, String> {
         use std::io::{BufRead, BufReader};
         use std::process::Stdio;
 
@@ -39,9 +39,12 @@ impl SteamCmdManager {
         // RimWorld App ID is 294100
         let app_id = "294100";
         
-        let mut child = Command::new(&self.executable_path)
-            .arg("+login")
-            .arg("anonymous")
+        let mut cmd = Command::new(&self.executable_path);
+        cmd.arg("+login").arg("anonymous");
+        if !install_dir.is_empty() {
+            cmd.arg("+force_install_dir").arg(&install_dir);
+        }
+        let mut child = cmd
             .arg("+workshop_download_item")
             .arg(app_id)
             .arg(&mod_id)
@@ -106,10 +109,10 @@ impl SteamCmdManager {
         }
     }
 
-    pub fn update_mods(&self, mod_ids: Vec<String>, window: tauri::Window) -> Result<Vec<(String, bool)>, String> {
+    pub fn update_mods(&self, mod_ids: Vec<String>, window: tauri::Window, install_dir: String) -> Result<Vec<(String, bool)>, String> {
         let mut results = Vec::new();
         for id in mod_ids {
-            match self.download_mod(window.clone(), id.clone(), "".to_string()) {
+            match self.download_mod(window.clone(), id.clone(), install_dir.clone()) {
                 Ok(_) => results.push((id, true)),
                 Err(e) => {
                     eprintln!("Mod {} güncellenirken hata oluştu: {}", id, e);

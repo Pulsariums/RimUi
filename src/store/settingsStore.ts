@@ -3,7 +3,7 @@ import { AppSettings, ExtraModSource } from "../types";
 type Listener<T> = (data: T) => void;
 
 /** Ayar şeması sürümü — bu değer yükselirse MIGRATIONS'a yeni adım eklenir */
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
 
 /** Sürüm → migration fonksiyonları (sırayla uygulanır) */
 const MIGRATIONS: Record<number, (s: AppSettings) => void> = {
@@ -11,6 +11,10 @@ const MIGRATIONS: Record<number, (s: AppSettings) => void> = {
   0: (s) => {
     if (!s.extraModSources) s.extraModSources = [];
     if (!s.historyLimit) s.historyLimit = 30;
+  },
+  // v1 → v2: SteamCMD yolu alanı eklendi.
+  1: (s) => {
+    if (!s.steamcmd_path) s.steamcmd_path = "";
   }
 };
 
@@ -21,6 +25,7 @@ class SettingsStore {
     rimworld_config_path: "",
     db_path: "C:\\Users\\Pulsar\\AppData\\Local\\RimWorldModHelper\\mods_cache.db",
     rimworld_exe_path: "",
+    steamcmd_path: "",
     extraModSources: [],
     historyLimit: 30
   };

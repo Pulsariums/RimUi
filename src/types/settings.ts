@@ -5,6 +5,8 @@ export interface AppSettings {
   rimworld_config_path: string;
   db_path: string;
   rimworld_exe_path: string;
+  /** SteamCMD yürütülebilir dosyasının tam yolu (steamcmd.exe) */
+  steamcmd_path: string;
   extraModSources?: ExtraModSource[];
   /** Her profil için tutulacak geçmiş (snapshot) adım sayısı — varsayılan 30 */
   historyLimit?: number;

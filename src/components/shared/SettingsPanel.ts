@@ -246,7 +246,8 @@ export class SettingsPanel {
       rimworld_mods_path: modsPath,
       rimworld_config_path: configPath,
       db_path: dbPath,
-      rimworld_exe_path: currentSettings.rimworld_exe_path || ""
+      rimworld_exe_path: currentSettings.rimworld_exe_path || "",
+      steamcmd_path: currentSettings.steamcmd_path || ""
     });
 
     Toast.show("Ayarlar başarıyla kaydedildi.", "success");
@@ -262,7 +263,8 @@ export class SettingsPanel {
           rimworld_mods_path: data.rimworld_mods_path,
           rimworld_config_path: data.rimworld_config_path,
           db_path: data.db_path,
-          rimworld_exe_path: data.rimworld_exe_path || ""
+          rimworld_exe_path: data.rimworld_exe_path || "",
+          steamcmd_path: data.steamcmd_path || ""
         });
         this.render();
         Toast.show("Ayarlar başarıyla içe aktarıldı!", "success");

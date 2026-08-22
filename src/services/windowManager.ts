@@ -14,8 +14,8 @@ class WindowManager {
     },
     steamcmd: {
       url: "/steamcmd.html",
-      width: 900,
-      height: 650,
+      width: 1100,
+      height: 760,
       title: "RimWorld Forge - SteamCMD",
     },
   };

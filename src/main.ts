@@ -37,7 +37,8 @@ class App {
         rimworld_mods_path: detectedHeroicMods,
         rimworld_config_path: detectedHeroicConfig,
         db_path: absoluteDbPath,
-        rimworld_exe_path: detectedHeroicExe
+        rimworld_exe_path: detectedHeroicExe,
+        steamcmd_path: currentSettings.steamcmd_path || ""
       });
       console.log("Pulsar'in Heroic RimWorld kurulumu otomatik olarak ayarlandi:", detectedHeroicMods);
     }
@@ -190,6 +191,7 @@ class App {
     modStore.subscribeActiveMods(() => {
       this.renderPresets(profileStore.getProfileNames());
       this.updatePresetActionButtons();
+      this.updateUndoRedoButtons();
     });
     this.updatePresetActionButtons();
 
@@ -445,7 +447,13 @@ class App {
 
       const btn = document.createElement("button");
       btn.className = "preset-btn";
-      btn.title = profileName;
+      // Açıklama + mod sayısı tooltip'i
+      const profileData = profileStore.getProfiles().find(p => p.name === profileName);
+      const modCount = profileData?.active_mods?.length ?? 0;
+      const desc = profileData?.description?.trim();
+      btn.title = desc
+        ? `${profileName} — ${desc} (${modCount} mod)`
+        : `${profileName} (${modCount} mod)`;
 
       const firstLetter = profileName.charAt(0).toUpperCase();
       const color = this.getPresetColor(profileName);
@@ -465,7 +473,6 @@ class App {
       btn.appendChild(nameSpan);
 
       // Sağlık göstergesi (sağlıksız preset'lerde renkli nokta)
-      const profileData = profileStore.getProfiles().find(p => p.name === profileName);
       if (profileData && profileData.health && profileData.health !== 'normal') {
         const healthDot = document.createElement("span");
         healthDot.className = "preset-health-dot";
@@ -938,6 +945,69 @@ class App {
     Toast.show(i18n.t('toast_redone'), "info");
   }
 
+  /** Undo/Redo butonlarının aktif/disabled durumunu günceller */
+  private updateUndoRedoButtons(): void {
+    const profile = profileStore.getActiveProfile();
+    const undoBtn = document.getElementById("btn-undo") as HTMLButtonElement | null;
+    const redoBtn = document.getElementById("btn-redo") as HTMLButtonElement | null;
+    if (undoBtn) undoBtn.disabled = !profile || !profile.history || profile.history.length === 0;
+    if (redoBtn) redoBtn.disabled = !profile || !profile.redo_history || profile.redo_history.length === 0;
+  }
+
+  /** Aktif modları bağımlılık sırasına göre sıralar (oyunu başlatmaz) */
+  private async handleSortMods(): Promise<void> {
+    const activeIds = modStore.getActiveProfileMods();
+    if (activeIds.length === 0) {
+      Toast.show(i18n.t('toast_no_active_mods'), "info");
+      return;
+    }
+    const metas = activeIds
+      .map(id => modStore.findMod(id))
+      .filter((m): m is ModMetadata => !!m);
+    try {
+      const sorted = await ModService.sortModsRimworld(metas);
+      if (sorted.length > 0) {
+        modStore.setActiveProfileMods(sorted);
+        Toast.show(i18n.t('toast_sorted'), "success");
+      }
+    } catch (err: any) {
+      Toast.show(i18n.t('toast_sorted_fail'), "warning");
+    }
+  }
+
+  /** Aktif modları SteamCMD ile günceller */
+  private async handleUpdateMods(): Promise<void> {
+    const activeIds = modStore.getActiveProfileMods();
+    if (activeIds.length === 0) {
+      Toast.show(i18n.t('toast_no_active_mods'), "info");
+      return;
+    }
+    try {
+      await ModService.updateMods(activeIds);
+      Toast.show(i18n.t('toast_batch_updated').replace('{n}', String(activeIds.length)), "success");
+    } catch (err: any) {
+      Toast.show(err.toString(), "error");
+    }
+  }
+
+  /** Aktif mod sıralamasının bağımlılık geçerliliğini kontrol eder */
+  private async handleValidateSorting(): Promise<void> {
+    const activeIds = modStore.getActiveProfileMods();
+    const metas = activeIds
+      .map(id => modStore.findMod(id))
+      .filter((m): m is ModMetadata => !!m);
+    if (metas.length === 0) {
+      Toast.show(i18n.t('toast_no_active_mods'), "info");
+      return;
+    }
+    try {
+      const valid = await ModService.validateSorting(metas);
+      Toast.show(valid ? i18n.t('toast_validated') : i18n.t('toast_validated_fail'), valid ? "success" : "warning");
+    } catch (err: any) {
+      Toast.show(err.toString(), "error");
+    }
+  }
+
   private setupDefaultRefreshButton() {
     const profileLabel = document.getElementById("active-profile-label");
     if (!profileLabel) return;
@@ -985,6 +1055,14 @@ class App {
     
     // Default yenileme butonu
     this.setupDefaultRefreshButton();
+
+    // Komut merkezi araç butonları (undo/redo/sort/update/validate)
+    document.getElementById("btn-undo")?.addEventListener("click", () => this.handleUndo());
+    document.getElementById("btn-redo")?.addEventListener("click", () => this.handleRedo());
+    document.getElementById("btn-sort")?.addEventListener("click", () => this.handleSortMods());
+    document.getElementById("btn-update")?.addEventListener("click", () => this.handleUpdateMods());
+    document.getElementById("btn-validate")?.addEventListener("click", () => this.handleValidateSorting());
+    this.updateUndoRedoButtons();
 
     // UYGULA butonu — workspace'i ModsConfig.xml'e yaz + Default'a işle (geçmiş adımı ekler)
     if (btnSaveConfig) {

@@ -24,7 +24,7 @@
       }
     ],
     "security": {
-      "csp": null,
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: asset: http://asset.localhost https:; connect-src 'self' ipc: http://ipc.localhost ws://localhost:1420 http://localhost:1420",
       "assetProtocol": {
         "enable": true,
         "scope": ["$USERPROFILE/**", "$APPDATA/**", "$HOME/**", "C:/**", "D:/**", "E:/**", "F:/**"]

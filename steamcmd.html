@@ -30,39 +30,64 @@
         </div>
       </div>
 
-      <!-- İçerik -->
-      <div id="app-content" class="flex flex-col flex-1 overflow-hidden p-4 bg-slate-950">
-        
-        <!-- Arama + Filtreleme Üst Çubuğu -->
-        <div class="flex items-center space-x-3 mb-4 shrink-0">
-          <div class="relative flex-1">
-            <input type="text" id="mod-search-input" placeholder="Mod adı veya ID ile ara..." class="w-full bg-slate-900 border border-slate-700/40 px-4 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500/20 rounded transition-all pl-10" />
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-          </div>
-          <!-- Sıralama seçimi -->
-          <select id="sort-select" class="bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500">
-            <option value="name">İsim A-Z</option>
-            <option value="name-desc">İsim Z-A</option>
-            <option value="id">ID A-Z</option>
-            <option value="id-desc">ID Z-A</option>
-          </select>
-          <!-- Filtre durumu -->
-          <select id="filter-select" class="bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500">
-            <option value="all">Tümü</option>
-            <option value="downloaded">İndirilmiş</option>
-            <option value="pending">Bekleyen</option>
-          </select>
-        </div>
-
-        <!-- Mod Listesi -->
-        <div id="mod-list-container" class="flex-1 overflow-y-auto bg-slate-900 border border-slate-800 rounded overflow-hidden">
-          <!-- Dinamik mod listesi -->
-          <div id="mod-list-content"></div>
-        </div>
-
+      <!-- Sekme Çubuğu -->
+      <div id="scmd-tabs" class="flex items-center gap-1 px-3 py-1.5 border-b border-slate-900 bg-slate-950 shrink-0">
+        <button class="scmd-tab active" data-tab="browse" data-i18n="scmd_tab_browse">KEŞFET</button>
+        <button class="scmd-tab" data-tab="queue"><span data-i18n="scmd_tab_queue">KUYRUK</span> <span id="queue-badge" class="scmd-badge">0</span></button>
+        <button class="scmd-tab" data-tab="updates" data-i18n="scmd_tab_updates">GÜNCELLEMELER</button>
+        <button class="scmd-tab" data-tab="installed" data-i18n="scmd_tab_installed">KURULU</button>
       </div>
+
+      <!-- İçerik -->
+      <div id="scmd-content" class="flex-1 overflow-hidden p-3">
+        <div id="tab-browse" class="scmd-panel">
+          <div class="scmd-browse-box">
+            <div class="scmd-browse-toolbar">
+              <div class="relative flex-1">
+                <input type="text" id="ws-search" data-i18n="scmd_search_ws" placeholder="Workshop'ta ara..." class="w-full bg-slate-900 border border-slate-700/40 px-4 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust/20 rounded pl-10" />
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
+              </div>
+              <button id="ws-search-btn" class="px-4 py-2 bg-rust border border-rust/60 text-[10px] font-mono font-bold hover:bg-rust-dark rounded transition-colors text-white whitespace-nowrap" data-i18n="scmd_search_btn">ARA</button>
+            </div>
+            <div class="flex-1 flex min-h-0">
+              <div id="ws-results" class="flex-1 overflow-y-auto p-2 ws-grid"></div>
+              <aside id="ws-detail" class="w-[380px] shrink-0 border-l border-slate-800 bg-slate-900/40 overflow-y-auto hidden"></aside>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-queue" class="scmd-panel hidden">
+          <div class="flex items-center justify-between mb-3 shrink-0">
+            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400" data-i18n="scmd_tab_queue">İNDİRME KUYRUĞU</h2>
+            <div class="flex gap-2">
+              <button id="btn-clear-queue" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100" data-i18n="scmd_clear_queue">KUYRUĞU TEMİZLE</button>
+              <button id="btn-download-queue" class="px-4 py-2 bg-emerald-700 border border-emerald-600 text-[10px] font-mono font-bold hover:bg-emerald-600 rounded transition-colors text-white" data-i18n="scmd_download_selected">SEÇİLENLERİ İNDİR</button>
+            </div>
+          </div>
+          <div id="queue-list" class="flex-1 overflow-y-auto space-y-2"></div>
+        </div>
+
+        <div id="tab-updates" class="scmd-panel hidden">
+          <div class="flex items-center justify-between mb-3 shrink-0">
+            <div>
+              <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400" data-i18n="scmd_tab_updates">GÜNCELLEMELER</h2>
+              <p class="text-[10px] text-slate-600 mt-1" data-i18n="scmd_updates_hint">Kurulu modların atölyedeki en son sürümünü yeniden indirir.</p>
+            </div>
+            <button id="btn-update-all" class="px-4 py-2 bg-amber-600/80 border border-amber-700/50 text-[10px] font-mono font-bold hover:bg-amber-600 rounded transition-colors text-white" data-i18n="scmd_update_all">TÜMÜNÜ GÜNCELLE</button>
+          </div>
+          <div id="updates-list" class="flex-1 overflow-y-auto space-y-2"></div>
+        </div>
+
+        <div id="tab-installed" class="scmd-panel hidden">
+          <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 mb-3 shrink-0" data-i18n="scmd_tab_installed">KURULU MODLAR</h2>
+          <div id="installed-list" class="flex-1 overflow-y-auto space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- İlerleme -->
+      <div id="steamcmd-progress" class="hidden shrink-0 mx-3 mb-3 bg-slate-900 border border-slate-800 rounded p-3"></div>
     </div>
     <script type="module" src="/src/windows/steamcmd/main.ts"></script>
   </body>

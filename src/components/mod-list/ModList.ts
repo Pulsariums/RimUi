@@ -731,21 +731,99 @@ export class ModList {
       actEl.innerText = `${activeMods.length} MOD${selSuffix}`;
     }
 
-    // Seçim durum çubuğu (aktif raf toolbar'ı) — toplu işlem ipuçları
-    document.querySelectorAll('.shelf-toolbar').forEach(tb => {
-      tb.textContent = '';
-      if (selCount > 0) {
-        const hint = i18n.t('selected_hint').replace('{n}', String(selCount));
-        tb.innerHTML = `
-          <span class="text-[9px] font-mono uppercase tracking-wider text-rust-light flex items-center gap-2">
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            ${hint}
-          </span>`;
-      }
-    });
+    // Seçim durum çubuğu (aktif raf toolbar'ı) — toplu işlem butonları
+    this.renderSelectionToolbar();
+  }
 
-    // Not: AnimationService.loadAll() buraya çağrılmaz — Lottie ikonları render
-    // frekansında yeniden yüklenmemeli; bir kez yüklenir (bknz. AnimationService).
+  /** Seçili modlar için toplu işlem butonlarını raf toolbar'ına çizer */
+  private renderSelectionToolbar(): void {
+    const selCount = this.selectedMods.size;
+    document.querySelectorAll('.shelf-toolbar').forEach(tb => {
+      tb.innerHTML = '';
+      if (selCount === 0) return;
+
+      const hint = document.createElement('span');
+      hint.className = 'text-[9px] font-mono uppercase tracking-wider text-rust-light';
+      hint.textContent = i18n.t('selected_count').replace('{n}', String(selCount));
+      tb.appendChild(hint);
+
+      const ids = [...this.selectedMods];
+
+      // Gruba Ekle
+      const grpBtn = this.selectionActionButton(i18n.t('batch_add_group'));
+      grpBtn.addEventListener('click', () => this.batchAddToGroup(ids));
+      tb.appendChild(grpBtn);
+
+      // Güncelle (yalnızca aktif raftaki seçimler)
+      const activeSel = ids.filter(id => modStore.getActiveProfileMods().includes(id));
+      if (activeSel.length > 0) {
+        const updBtn = this.selectionActionButton(i18n.t('batch_update'));
+        updBtn.addEventListener('click', async () => {
+          try {
+            await import("../../services/modService").then(({ ModService }) => ModService.updateMods(activeSel));
+            const { Toast } = await import("../shared/Toast");
+            Toast.show(i18n.t('toast_batch_updated').replace('{n}', String(activeSel.length)), "success");
+          } catch (err: any) {
+            const { Toast } = await import("../shared/Toast");
+            Toast.show(err.toString(), "error");
+          }
+        });
+        tb.appendChild(updBtn);
+      }
+
+      // Sil
+      const delBtn = this.selectionActionButton(i18n.t('batch_delete'), true);
+      delBtn.addEventListener('click', () => this.batchDelete(ids));
+      tb.appendChild(delBtn);
+    });
+  }
+
+  private selectionActionButton(label: string, danger = false): HTMLElement {
+    const btn = document.createElement('button');
+    btn.className = `px-2 py-1 text-[9px] font-mono uppercase tracking-wider rounded-sm border transition-colors ${
+      danger
+        ? 'text-red-400 border-red-800 hover:bg-red-900 hover:text-red-200'
+        : 'text-slate-300 border-slate-600 hover:bg-rust hover:text-white hover:border-rust'
+    }`;
+    btn.textContent = label;
+    return btn;
+  }
+
+  /** Seçili modları yeni/belirtilen bir gruba ekler */
+  private async batchAddToGroup(ids: string[]): Promise<void> {
+    const { Toast } = await import("../shared/Toast");
+    const name = prompt(i18n.t('batch_add_group_prompt'));
+    if (!name || !name.trim()) {
+      Toast.show(i18n.t('toast_no_group_name'), "error");
+      return;
+    }
+    const groupId = modStore.createGroup(name.trim());
+    ids.forEach(id => modStore.addModToGroup(groupId, id));
+    this.clearSelection();
+  }
+
+  /** Seçili modları diskten siler; dosya yoksa yalnızca kayıtlardan kaldırır */
+  private async batchDelete(ids: string[]): Promise<void> {
+    const { Toast } = await import("../shared/Toast");
+    if (!confirm(i18n.t('mod_delete_multi_confirm').replace('{n}', String(ids.length)))) return;
+    const { ModService } = await import("../../services/modService");
+    let removed = 0;
+    for (const id of ids) {
+      try {
+        await ModService.deleteMod(id);
+        removed++;
+      } catch (err: any) {
+        // Dosya zaten yoksa (dead mod) sadece kayıtlardan kaldır
+        if (String(err).toLowerCase().includes('bulunamadi') || String(err).toLowerCase().includes('not found')) {
+          removed++;
+        } else {
+          console.warn("Mod silinemedi:", id, err);
+        }
+      }
+      modStore.removeMod(id);
+    }
+    this.clearSelection();
+    Toast.show(i18n.t('toast_batch_deleted').replace('{n}', String(removed)), "success");
   }
 
   /** Store'da artık olmayan modları ve grupları cache'ten temizle */

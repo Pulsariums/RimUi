@@ -8,6 +8,29 @@ export interface DetectedPaths {
   executable_path: string | null;
 }
 
+export interface WorkshopItem {
+  id: string;
+  title: string;
+  author: string;
+  preview_url: string;
+}
+
+export interface WorkshopDetails {
+  id: string;
+  title: string;
+  description: string;
+  preview_url: string;
+  screenshots: string[];
+  author: string;
+  file_size: number;
+  time_updated: number;
+  subscriptions: number;
+  favorites: number;
+  score: number;
+  votes_up: number;
+  votes_down: number;
+}
+
 export class ModService {
   /**
    * Detects typical RimWorld and ModsConfig.xml paths on Windows.
@@ -59,15 +82,27 @@ export class ModService {
   }
 
   static async downloadMod(modId: string): Promise<void> {
-    const { rimworld_mods_path } = settingsStore.getSettings();
+    const { steamcmd_path, rimworld_mods_path } = settingsStore.getSettings();
+    if (!steamcmd_path) throw new Error("SteamCMD yolu ayarlı değil (Ayarlar → Klasör Yolları).");
     if (!rimworld_mods_path) throw new Error("RimWorld Mods yolu ayarlı değil.");
-    return safeInvoke<void>("download_mod", { path: rimworld_mods_path, mod_id: modId });
+    return safeInvoke<void>("download_mod", { steamcmdPath: steamcmd_path, installDir: rimworld_mods_path, modId });
   }
 
   static async updateMods(modIds: string[]): Promise<void> {
-    const { rimworld_mods_path } = settingsStore.getSettings();
+    const { steamcmd_path, rimworld_mods_path } = settingsStore.getSettings();
+    if (!steamcmd_path) throw new Error("SteamCMD yolu ayarlı değil (Ayarlar → Klasör Yolları).");
     if (!rimworld_mods_path) throw new Error("RimWorld Mods yolu ayarlı değil.");
-    return safeInvoke<void>("update_mods", { path: rimworld_mods_path, mod_ids: modIds });
+    return safeInvoke<void>("update_mods", { steamcmdPath: steamcmd_path, installDir: rimworld_mods_path, modIds });
+  }
+
+  /** Steam Workshop'ta arama (topluluk sayfası scrape, anahtar gerektirmez) */
+  static async searchWorkshop(query: string, page = 1): Promise<WorkshopItem[]> {
+    return safeInvoke<WorkshopItem[]>("workshop_search", { query, page });
+  }
+
+  /** Mod detayı + ekran görüntüleri (scrape) */
+  static async getWorkshopDetails(id: string): Promise<WorkshopDetails> {
+    return safeInvoke<WorkshopDetails>("workshop_details", { id });
   }
 
   static async validateSorting(mods: ModMetadata[]): Promise<boolean> {

@@ -73,6 +73,22 @@
 
             <!-- Sağ: Butonlar -->
             <div id="ui-command-right" class="flex items-center space-x-2 shrink-0">
+              <button id="btn-undo" data-i18n-title="btn_undo" title="Geri Al (Ctrl+Z)" class="cmd-icon-btn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" /></svg>
+              </button>
+              <button id="btn-redo" data-i18n-title="btn_redo" title="Ileri Al (Ctrl+Y)" class="cmd-icon-btn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3" /></svg>
+              </button>
+              <div class="w-px h-6 bg-slate-700/60 mx-1 shrink-0"></div>
+              <button id="btn-sort" data-i18n-title="btn_sort" title="Bagimliliga gore sirala" class="cmd-icon-btn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m8 4l3 3m0 0l3-3m-3 3V9" /></svg>
+              </button>
+              <button id="btn-update" data-i18n-title="btn_update" title="Modlari guncelle" class="cmd-icon-btn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+              </button>
+              <button id="btn-validate" data-i18n-title="btn_validate" title="Siralamayi dogrula" class="cmd-icon-btn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </button>
               <button id="btn-save-config" class="group relative px-3 py-2 bg-emerald-700 border border-emerald-600 text-[9px] font-mono hover:bg-emerald-600 hover:border-emerald-500 active:bg-emerald-500 rounded-[var(--radius-industrial)] transition-all text-emerald-200 hover:text-white flex items-center space-x-2 whitespace-nowrap">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span data-i18n="apply" class="tracking-wider">UYGULA</span>

@@ -1,6 +1,7 @@
 pub mod data_store;
 pub mod mod_engine;
 pub mod steamcmd;
+pub mod workshop;
 
 use data_store::cache::CacheEngine;
 use data_store::profile::{ModProfile, ProfileStore};
@@ -10,6 +11,7 @@ use mod_engine::orchestrator::write_mods_config_atomic;
 use mod_engine::fs_watcher::start_mods_config_watcher;
 
 use steamcmd::SteamCmdManager;
+use workshop::{WorkshopDetails, WorkshopItem};
 
 #[derive(serde::Serialize)]
 pub struct DetectedPaths {
@@ -234,6 +236,8 @@ pub fn run() {
             check_steamcmd_installed,
             download_mod,
             update_mods,
+            workshop_search,
+            workshop_details,
             validate_sorting,
             launch_game,
             delete_mod,
@@ -281,23 +285,33 @@ fn check_steamcmd_installed(path: String) -> bool {
 }
 
 #[tauri::command]
-async fn download_mod(window: tauri::Window, path: String, mod_id: String) -> Result<String, String> {
+async fn download_mod(window: tauri::Window, steamcmd_path: String, install_dir: String, mod_id: String) -> Result<String, String> {
    tokio::task::spawn_blocking(move || {
-       let manager = SteamCmdManager::new(path);
-       manager.download_mod(window, mod_id, "".to_string())
+       let manager = SteamCmdManager::new(steamcmd_path);
+       manager.download_mod(window, mod_id, install_dir)
    })
    .await
    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 #[tauri::command]
-async fn update_mods(window: tauri::Window, path: String, mod_ids: Vec<String>) -> Result<Vec<(String, bool)>, String> {
+async fn update_mods(window: tauri::Window, steamcmd_path: String, install_dir: String, mod_ids: Vec<String>) -> Result<Vec<(String, bool)>, String> {
    tokio::task::spawn_blocking(move || {
-       let manager = SteamCmdManager::new(path);
-        manager.update_mods(mod_ids, window)
+       let manager = SteamCmdManager::new(steamcmd_path);
+        manager.update_mods(mod_ids, window, install_dir)
    })
    .await
    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+#[tauri::command]
+async fn workshop_search(query: String, page: u32) -> Result<Vec<WorkshopItem>, String> {
+    workshop::search_workshop(&query, page).await
+}
+
+#[tauri::command]
+async fn workshop_details(id: String) -> Result<WorkshopDetails, String> {
+    workshop::get_workshop_details(&id).await
 }
 
 #[tauri::command]

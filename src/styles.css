@@ -444,6 +444,202 @@ body {
   font-weight: 600;
 }
 
+/* Komut merkezi ikon butonları (undo/redo/sort/update/validate) */
+.cmd-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: rgba(45, 49, 57, 0.6);
+  border: 1px solid rgba(69, 73, 82, 0.5);
+  border-radius: 6px;
+  color: #a0a6b0;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+.cmd-icon-btn:hover {
+  background: #2d3139;
+  color: #e2e8f0;
+  border-color: rgba(120, 130, 145, 0.6);
+}
+.cmd-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.cmd-icon-btn:disabled:hover {
+  background: rgba(45, 49, 57, 0.6);
+  color: #a0a6b0;
+  border-color: rgba(69, 73, 82, 0.5);
+}
+.cmd-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== SteamCMD penceresi ===== */
+.scmd-tab {
+  padding: 6px 14px;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scmd-tab:hover { color: #cbd5e1; background: rgba(45,49,57,0.5); }
+.scmd-tab.active { color: #f3f4f6; background: #1f2937; border-color: rgba(120,130,145,0.4); }
+.scmd-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #b45309;
+  color: #fff;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.scmd-panel { display: flex; flex-direction: column; height: 100%; }
+
+/* Keşfet "dikdörtgen" kutusu */
+.scmd-browse-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0b1220;
+  border: 1px solid rgba(69,73,82,0.5);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.scmd-browse-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(51,65,85,0.5);
+  background: rgba(15,23,42,0.6);
+}
+
+/* Sonuç kartları gridi */
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.ws-card {
+  background: #101827;
+  border: 1px solid rgba(69,73,82,0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+  display: flex;
+  flex-direction: column;
+}
+.ws-card:hover { border-color: rgba(180,83,9,0.6); transform: translateY(-1px); }
+.ws-card-img {
+  aspect-ratio: 16/9;
+  background: #0b0f17;
+  overflow: hidden;
+  position: relative;
+}
+.ws-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ws-card-img.no-img { display: flex; align-items: center; justify-content: center; }
+.ws-noimg {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: #475569; font-size: 9px; font-family: 'Courier New', monospace;
+}
+.ws-card-body { padding: 8px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.ws-card-title { font-size: 11px; font-weight: 600; color: #e2e8f0; line-height: 1.3; }
+.ws-card-author { font-size: 9px; color: #64748b; font-family: 'Courier New', monospace; }
+.ws-card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 6px; }
+
+.ws-btn {
+  padding: 4px 10px;
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 5px;
+  border: 1px solid rgba(71,85,105,0.5);
+  background: #1e293b;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.ws-btn:hover { background: #334155; color: #fff; }
+.ws-btn-detail { flex: 0 0 auto; }
+.ws-btn-add { background: #1a2e22; border-color: rgba(22,101,52,0.5); color: #86efac; flex: 1; }
+.ws-btn-add:hover { background: #14532d; }
+.ws-btn-add.added { background: #1e3a5f; border-color: rgba(29,78,216,0.5); color: #93c5fd; }
+.ws-btn-primary { background: #14532d; border-color: #166534; color: #fff; }
+.ws-btn-primary:hover { background: #166534; }
+.ws-btn-danger { background: #3f1d1d; border-color: #7f1d1d; color: #fca5a5; }
+.ws-btn-danger:hover { background: #7f1d1d; }
+
+/* Detay paneli */
+.ws-gallery { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.ws-gallery img {
+  width: 140px; height: 90px; object-fit: cover; border-radius: 6px;
+  border: 1px solid rgba(69,73,82,0.4); cursor: pointer; flex-shrink: 0;
+  transition: border-color 0.12s ease;
+}
+.ws-gallery img.active { border-color: #b45309; box-shadow: 0 0 0 1px #b45309; }
+.ws-stat {
+  background: rgba(15,23,42,0.7);
+  border: 1px solid rgba(69,73,82,0.3);
+  border-radius: 6px;
+  padding: 8px 4px;
+}
+.ws-stat b { display: block; font-size: 14px; color: #f1f5f9; font-family: 'Courier New', monospace; }
+.ws-stat span { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; }
+.ws-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.55;
+  max-height: 300px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+.ws-desc img { max-width: 100%; border-radius: 6px; margin: 4px 0; }
+.ws-desc a { color: #93c5fd; }
+
+/* Kuyruk / listeler */
+.ws-queue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #101827;
+  border: 1px solid rgba(69,73,82,0.35);
+  border-radius: 8px;
+}
+.ws-queue-row > img { width: 42px; height: 42px; object-fit: cover; border-radius: 5px; }
+.ws-queue-idx { font-size: 12px; color: #64748b; font-family: 'Courier New', monospace; min-width: 16px; }
+.scmd-status { font-size: 9px; font-family: 'Courier New', monospace; text-transform: uppercase; }
+.scmd-status.ok { color: #34d399; }
+.scmd-empty {
+  padding: 30px 10px;
+  text-align: center;
+  color: #64748b;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  grid-column: 1 / -1;
+}
+
 /* --- ANIMASYONLAR --- */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }

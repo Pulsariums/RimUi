@@ -110,6 +110,13 @@ class SettingsApp {
               <label class="block text-xs font-mono text-slate-500 mb-2">VERİTABANI YOLU</label>
               <input type="text" id="path-db" class="w-full bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500" />
             </div>
+            <div>
+              <label class="block text-xs font-mono text-slate-500 mb-2">STEAMCMD.EXE YOLU</label>
+              <div class="flex space-x-2">
+                <input type="text" id="path-steamcmd" class="flex-1 bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500" placeholder="steamcmd.exe" />
+                <button id="btn-browse-steamcmd" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100">GÖZAT</button>
+              </div>
+            </div>
             <div class="flex space-x-2">
               <button id="btn-detect-paths" class="px-4 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100">OTOMATİK TESPİT ET</button>
               <button id="btn-save-paths" class="px-4 py-2 bg-amber-600/80 border border-amber-700/50 text-[10px] font-mono hover:bg-amber-600 rounded transition-colors text-slate-100">KAYDET</button>
@@ -207,10 +214,22 @@ class SettingsApp {
     const modsInput = document.getElementById("path-mods") as HTMLInputElement | null;
     const configInput = document.getElementById("path-config") as HTMLInputElement | null;
     const dbInput = document.getElementById("path-db") as HTMLInputElement | null;
+    const steamcmdInput = document.getElementById("path-steamcmd") as HTMLInputElement | null;
 
     if (modsInput) modsInput.value = settings.rimworld_mods_path || "";
     if (configInput) configInput.value = settings.rimworld_config_path || "";
     if (dbInput) dbInput.value = settings.db_path || "";
+    if (steamcmdInput) steamcmdInput.value = settings.steamcmd_path || "";
+
+    document.getElementById("btn-browse-steamcmd")?.addEventListener("click", async () => {
+      const selected = await open({
+        directory: false,
+        multiple: false,
+        title: "steamcmd.exe Seç",
+        filters: [{ name: "EXE", extensions: ["exe"] }]
+      });
+      if (selected && typeof selected === "string" && steamcmdInput) steamcmdInput.value = selected;
+    });
 
     document.getElementById("btn-browse-mods")?.addEventListener("click", async () => {
       const selected = await open({ directory: true, multiple: false, title: "RimWorld Mods Klasörünü Seç" });
@@ -244,6 +263,7 @@ class SettingsApp {
       if (modsInput) next.rimworld_mods_path = modsInput.value.trim();
       if (configInput) next.rimworld_config_path = configInput.value.trim();
       if (dbInput) next.db_path = dbInput.value.trim();
+      if (steamcmdInput) next.steamcmd_path = steamcmdInput.value.trim();
       settingsStore.setSettings(next);
       Toast.show("Ayarlar kaydedildi.", "success");
     });

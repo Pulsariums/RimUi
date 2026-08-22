@@ -294,18 +294,21 @@ export class ModItem {
       e.stopPropagation();
       closeMenu();
       if (confirm(i18n.t('mod_delete_confirm').replace('{name}', mod.name))) {
-        import("../../services/modService").then(({ ModService }) => {
-          ModService.deleteMod(mod.package_id)
-            .then(() => {
-              import("../../components/shared/Toast").then(({ Toast }) => {
-                Toast.show(`"${mod.name}" silindi.`, "success");
-              });
-            })
-            .catch((err) => {
-              import("../../components/shared/ErrorModal").then(({ ErrorModal }) => {
-                new ErrorModal("Hata", "Mod silinemedi: " + err).open();
-              });
-            });
+        import("../../services/modService").then(async ({ ModService }) => {
+          try {
+            await ModService.deleteMod(mod.package_id);
+          } catch (err: any) {
+            // Dosya zaten yoksa (dead mod) yalnızca kayıtlardan kaldır
+            const msg = String(err).toLowerCase();
+            if (!msg.includes('bulunamadi') && !msg.includes('not found')) {
+              const { ErrorModal } = await import("../../components/shared/ErrorModal");
+              new ErrorModal("Hata", "Mod silinemedi: " + err).open();
+              return;
+            }
+          }
+          modStore.removeMod(mod.package_id);
+          const { Toast } = await import("../../components/shared/Toast");
+          Toast.show(`"${mod.name}" ${i18n.t('toast_mod_deleted_records')}`, "success");
         });
       }
     });
