@@ -1,0 +1,57 @@
+name: Test Build
+
+# ⚠️ SADECE ELLE TETİKLENİR — hiçbir push/PR otomatik çalıştırmaz.
+# Actions sekmesi → "Test Build" → "Run workflow" ile başlat.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows Test Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur + npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # rust-toolchain.toml dosyasını otomatik okur (stable-x86_64-pc-windows-msvc)
+      - name: Rust toolchain kur
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # Rust derleme önbelleği — ikinci çalıştırmadan itibaren süreyi ciddi kısaltır
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-all-crates: true
+
+      - name: Frontend bağımlılıklarını yükle
+        run: npm ci
+
+      # beforeBuildCommand (npm run build) otomatik çalışır;
+      # --no-bundle installer paketlemesini atlar → daha hızlı test build'i.
+      - name: Tauri build
+        run: npm run tauri -- build --no-bundle
+
+      - name: Test çıktılarını hazırla
+        shell: pwsh
+        run: |
+          $out = "test-output"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item "src-tauri/target/release/tauri-app.exe" "$out/RimWorldForge-test.exe"
+          Copy-Item "src-tauri/binaries/steam_api64.dll" $out/
+          Get-ChildItem $out | Format-Table Name, Length
+
+      - name: Artifact olarak yükle (Actions sayfasından indirilebilir)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RimWorldForge-test
+          path: test-output/
+          retention-days: 14

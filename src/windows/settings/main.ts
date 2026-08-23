@@ -117,7 +117,8 @@ class SettingsApp {
             <div>
               <label class="block text-xs font-mono text-slate-500 mb-2">STEAMCMD.EXE YOLU</label>
               <div class="flex space-x-2">
-                <input type="text" id="path-steamcmd" class="flex-1 bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500" placeholder="steamcmd.exe" />
+                <input type="text" id="path-steamcmd" class="flex-1 bg-slate-900 border border-slate-700/40 px-3 py-2 text-xs font-mono text-slate-300 rounded focus:outline-none focus:border-slate-500" placeholder="steamcmd.exe (boşsa otomatik yönetilir)" />
+                <button id="btn-auto-steamcmd" class="px-3 py-2 bg-rust/80 border border-rust/60 text-[10px] font-mono font-bold hover:bg-rust rounded transition-colors text-white whitespace-nowrap">OTOMATİK KUR</button>
                 <button id="btn-browse-steamcmd" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100">GÖZAT</button>
               </div>
             </div>
@@ -212,7 +213,7 @@ class SettingsApp {
     }
   }
 
-  private bindPathControls() {
+  private async bindPathControls() {
     const settings = this.getSettings();
 
     const modsInput = document.getElementById("path-mods") as HTMLInputElement | null;
@@ -233,6 +234,31 @@ class SettingsApp {
         filters: [{ name: "EXE", extensions: ["exe"] }]
       });
       if (selected && typeof selected === "string" && steamcmdInput) steamcmdInput.value = selected;
+    });
+
+    // SteamCMD'yi tek tıkla indir/kur ve yolu ayarlara işle
+    const autoBtn = document.getElementById("btn-auto-steamcmd") as HTMLButtonElement | null;
+    const { listen } = await import("@tauri-apps/api/event");
+    void listen<{ progress: number; speed: string; message: string }>("steamcmd-progress", (ev) => {
+      if (autoBtn && !autoBtn.disabled && ev.payload.message) {
+        autoBtn.textContent = ev.payload.progress > 0 ? `%${Math.round(ev.payload.progress)}` : "...";
+      }
+    }).catch(() => {});
+    autoBtn?.addEventListener("click", async () => {
+      if (!autoBtn || autoBtn.disabled) return;
+      autoBtn.disabled = true;
+      autoBtn.textContent = "KURULUYOR...";
+      try {
+        const path = await ModService.steamcmdSetup();
+        if (steamcmdInput) steamcmdInput.value = path;
+        settingsStore.setSettings({ ...this.getSettings(), steamcmd_path: path });
+        Toast.show("SteamCMD kuruldu ve ayarlara işlendi.", "success");
+      } catch (e) {
+        Toast.show("SteamCMD kurulumu başarısız: " + e, "error");
+      } finally {
+        autoBtn.disabled = false;
+        autoBtn.textContent = "OTOMATİK KUR";
+      }
     });
 
     document.getElementById("btn-browse-mods")?.addEventListener("click", async () => {

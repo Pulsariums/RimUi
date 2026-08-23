@@ -1,6 +1,7 @@
 pub mod data_store;
 pub mod mod_engine;
 pub mod steamcmd;
+pub mod steamworks_dl;
 pub mod workshop;
 
 use data_store::cache::CacheEngine;
@@ -276,6 +277,10 @@ pub fn run() {
             read_text_file,
             write_text_file,
             check_steamcmd_installed,
+            steamcmd_resolve,
+            steamcmd_setup,
+            steam_client_available,
+            steam_download_mod,
             download_mod,
             update_mods,
             workshop_search,
@@ -328,10 +333,47 @@ fn check_steamcmd_installed(path: String) -> bool {
    manager.is_installed()
 }
 
+/// SteamCMD durumunu çözer: ok / found_elsewhere (onarılabilir) / missing
+#[tauri::command]
+fn steamcmd_resolve(configured_path: String) -> steamcmd::ResolveResult {
+    steamcmd::resolve_steamcmd(&configured_path)
+}
+
+/// SteamCMD'yi tek tıkla indirip kurar (yönetilen klasöre). Yolu döndürür.
+#[tauri::command]
+async fn steamcmd_setup(window: tauri::Window) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        steamcmd::setup_steamcmd(&window).map(|p| p.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+/// Steam client'ı şu an çalışıyor mu? (native indirme ön kontrolü)
+#[tauri::command]
+fn steam_client_available() -> bool {
+    steamworks_dl::steam_running()
+}
+
+/// Steam client üzerinden workshop indirme (kullanıcının açık oturumuyla).
+#[tauri::command]
+async fn steam_download_mod(window: tauri::Window, install_dir: String, mod_id: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        steamworks_dl::download_mod(window, mod_id, install_dir)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
 #[tauri::command]
 async fn download_mod(window: tauri::Window, steamcmd_path: String, install_dir: String, mod_id: String) -> Result<String, String> {
+   if install_dir.trim().is_empty() {
+       return Err("RimWorld Mods klasörü ayarlı değil (Ayarlar → Yol).".into());
+   }
    tokio::task::spawn_blocking(move || {
-       let manager = SteamCmdManager::new(steamcmd_path);
+       // Ayar bozuk/eksikse: yönetilen → cihazda tespit → otomatik kurulum
+       let exe = steamcmd::ensure_steamcmd(&window, &steamcmd_path)?;
+       let manager = SteamCmdManager::new(exe.to_string_lossy().into_owned());
        manager.download_mod(window, mod_id, install_dir)
    })
    .await

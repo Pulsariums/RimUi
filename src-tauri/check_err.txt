@@ -1,0 +1,2 @@
+    Checking tauri-app v1.0.4 (C:\Users\Pulsar\Desktop\github geliştimeleri\rimwordl başlatıcı\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.07s

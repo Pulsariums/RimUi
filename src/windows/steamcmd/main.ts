@@ -19,7 +19,10 @@ type QueueStatus = "queued" | "connecting" | "downloading" | "done" | "error";
 interface QueueItem extends WorkshopItem {
   status: QueueStatus;
   progress: number;
+  error?: string;
 }
+
+type DownloadMethod = "steamcmd" | "steam";
 
 class SteamCmdApp {
   private installed: InstalledMod[] = [];
@@ -32,11 +35,14 @@ class SteamCmdApp {
   private workshopIds = new Map<string, string>();
   private page = 1;
   private lastQuery = "";
+  private methodModalResolve: ((m: DownloadMethod) => void) | null = null;
+  private repairPath: string | null = null;
 
   constructor() {
     this.setupTitleBar();
     this.setupTabs();
     this.setupListeners();
+    void this.checkSteamcmdHealth();
     this.loadWorkshopIds();
     void this.loadInstalled();
     this.setupProgressListener();
@@ -99,13 +105,89 @@ class SteamCmdApp {
     document.getElementById("btn-update-all")?.addEventListener("click", () => this.updateAll());
     document.getElementById("btn-resolve-ids")?.addEventListener("click", () => void this.resolveAllIds());
     document.getElementById("ws-detail-close")?.addEventListener("click", () => this.closeDetail());
-    document.querySelector(".scmd-modal-backdrop")?.addEventListener("click", () => this.closeDetail());
+    document.getElementById("method-steamcmd")?.addEventListener("click", () => this.chooseMethod("steamcmd"));
+    document.getElementById("method-steam")?.addEventListener("click", () => void this.chooseSteamIfAvailable());
+    document.getElementById("btn-repair-steamcmd")?.addEventListener("click", () => this.repairSteamcmdPath());
+  }
+
+  // --- İndirme yöntemi seçimi ---
+
+  private getDownloadMethod(): DownloadMethod | null {
+    const v = localStorage.getItem("scmd_download_method");
+    return v === "steamcmd" || v === "steam" ? v : null;
+  }
+
+  /** Yöntem belirlenmemişse seçim modalını açar; kullanıcıyı bekler. */
+  private ensureMethod(): Promise<DownloadMethod> {
+    const existing = this.getDownloadMethod();
+    if (existing) return Promise.resolve(existing);
+    document.getElementById("method-modal")?.classList.remove("hidden");
+    return new Promise<DownloadMethod>((resolve) => {
+      this.methodModalResolve = resolve;
+    });
+  }
+
+  private chooseMethod(m: DownloadMethod): void {
+    localStorage.setItem("scmd_download_method", m);
+    document.getElementById("method-modal")?.classList.add("hidden");
+    const resolve = this.methodModalResolve;
+    this.methodModalResolve = null;
+    resolve?.(m);
+  }
+
+  private async chooseSteamIfAvailable(): Promise<void> {
+    const ok = await ModService.steamClientAvailable().catch(() => false);
+    if (!ok) {
+      this.showProgressBar(true, "Steam client çalışıyor görünmüyor. Steam'i başlatıp tekrar deneyin.", "error");
+      setTimeout(() => this.showProgressBar(false, ""), 4000);
+      return;
+    }
+    this.chooseMethod("steam");
+  }
+
+  /** Seçili yönteme göre indirir. */
+  private async runDownload(modId: string): Promise<void> {
+    const method = await this.ensureMethod();
+    if (method === "steam") await ModService.steamDownloadMod(modId);
+    else await ModService.downloadMod(modId);
+  }
+
+  // --- SteamCMD tespit / onarım ---
+
+  /** Ayarlı path bozuksa ama steamcmd cihazda varsa ONAR butonunu gösterir. */
+  private async checkSteamcmdHealth(): Promise<void> {
+    try {
+      const { steamcmd_path } = settingsStore.getSettings();
+      const res = await ModService.steamcmdResolve(steamcmd_path || "");
+      if (res.status === "found_elsewhere" && res.path && res.path !== steamcmd_path) {
+        this.repairPath = res.path;
+        document.getElementById("btn-repair-steamcmd")?.classList.remove("hidden");
+        console.info("[SteamCMD] Cihazda bulundu, onarılabilir:", res.path);
+      } else {
+        this.repairPath = null;
+        document.getElementById("btn-repair-steamcmd")?.classList.add("hidden");
+      }
+    } catch (err) {
+      console.warn("SteamCMD sağlık kontrolü başarısız:", err);
+    }
+  }
+
+  private repairSteamcmdPath(): void {
+    if (!this.repairPath) return;
+    settingsStore.setSettings({ ...settingsStore.getSettings(), steamcmd_path: this.repairPath });
+    console.info("[SteamCMD] Yol onarıldı:", this.repairPath);
+    this.repairPath = null;
+    document.getElementById("btn-repair-steamcmd")?.classList.add("hidden");
+    this.toast("SteamCMD yolu onarıldı.");
   }
 
   private async search(query: string, targetPage = 1) {
     const q = query.trim();
     if (!q || this.searching) return;
-    if (query !== this.lastQuery) this.page = 1;
+    if (query !== this.lastQuery) {
+      this.page = 1;
+      this.closeDetail(); // Yeni aramada eski detay panelini sıfırla
+    }
     this.lastQuery = query;
     this.page = Math.max(1, targetPage);
     this.searching = true;
@@ -170,12 +252,18 @@ class SteamCmdApp {
         const img = item.preview_url
           ? `<img src="${item.preview_url}" loading="lazy" onerror="this.parentElement.classList.add('no-img');this.remove();" />`
           : `<div class="ws-noimg">NO IMG</div>`;
+        const ver = item.version
+          ? `<span class="ws-ver-badge">v${this.escapeHtml(item.version)}</span>`
+          : `<span class="ws-ver-badge na">—</span>`;
         return `
         <div class="ws-card" data-id="${item.id}">
           <div class="ws-card-img">${img}</div>
           <div class="ws-card-body">
             <div class="ws-card-title" title="${this.escapeAttr(item.title)}">${this.escapeHtml(item.title) || item.id}</div>
-            <div class="ws-card-author">${this.escapeHtml(item.author)}</div>
+            <div class="ws-card-sub">
+              ${ver}
+              <span class="ws-card-author">${this.escapeHtml(item.author)}</span>
+            </div>
             <div class="ws-card-actions">
               <button class="ws-btn ws-btn-detail" data-detail="${item.id}">${i18n.t("scmd_detail")}</button>
               <button class="ws-btn ws-btn-add ${inQueue ? "added" : ""}" data-add="${item.id}">${inQueue ? i18n.t("scmd_queued") : i18n.t("scmd_add_queue")}</button>
@@ -185,10 +273,23 @@ class SteamCmdApp {
       })
       .join("");
     el.querySelectorAll<HTMLElement>("[data-add]").forEach((b) =>
-      b.addEventListener("click", () => this.addToQueue(b.dataset.add || ""))
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.addToQueue(b.dataset.add || "");
+      })
     );
     el.querySelectorAll<HTMLElement>("[data-detail]").forEach((b) =>
-      b.addEventListener("click", () => this.showDetail(b.dataset.detail || ""))
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        void this.showDetail(b.dataset.detail || "");
+      })
+    );
+    // Kartın tamamına tıklanınca sağdaki detay paneli açılır
+    el.querySelectorAll<HTMLElement>(".ws-card").forEach((card) =>
+      card.addEventListener("click", () => {
+        const id = card.dataset.id;
+        if (id) void this.showDetail(id);
+      })
     );
     this.renderPagination();
   }
@@ -210,13 +311,15 @@ class SteamCmdApp {
   }
 
   private async showDetail(id: string) {
-    const modal = document.getElementById("ws-detail-modal");
-    const titleEl = document.getElementById("ws-detail-modal-title");
+    const aside = document.getElementById("ws-detail");
+    const titleEl = document.getElementById("ws-detail-title");
     const detailEl = document.getElementById("ws-detail-content");
-    if (!modal || !detailEl) return;
-    modal.classList.remove("hidden");
+    const footEl = document.getElementById("ws-detail-foot");
+    if (!aside || !detailEl || !footEl) return;
+    aside.classList.remove("hidden");
     if (titleEl) titleEl.textContent = id;
     detailEl.innerHTML = `<div class="scmd-empty">${i18n.t("scmd_detail_loading")}</div>`;
+    footEl.innerHTML = "";
     try {
       const d: WorkshopDetails = await ModService.getWorkshopDetails(id);
       if (titleEl) titleEl.textContent = d.title || id;
@@ -227,10 +330,15 @@ class SteamCmdApp {
             .join("")}</div>`
         : "";
       const desc = d.description.replace(/<script[\s\S]*?<\/script>/gi, "");
+      const verBadge = d.version
+        ? `<span class="ws-ver-badge">v${this.escapeHtml(d.version)}</span>`
+        : "";
       detailEl.innerHTML = `
         <div class="space-y-3">
           ${gallery}
-          <div class="text-[10px] font-mono text-slate-500">${this.escapeHtml(d.author)} · ID: ${d.id}</div>
+          <div class="text-[10px] font-mono text-slate-500">
+            ${this.escapeHtml(d.author)} · ID: ${d.id} ${verBadge}
+          </div>
           <div class="grid grid-cols-4 gap-2 text-center">
             <div class="ws-stat"><b>${d.score.toFixed(1)}</b><span>${i18n.t("scmd_rating")}</span></div>
             <div class="ws-stat"><b>${this.fmt(d.subscriptions)}</b><span>${i18n.t("scmd_subscriptions")}</span></div>
@@ -239,30 +347,33 @@ class SteamCmdApp {
           </div>
           <div class="ws-desc">${desc || i18n.t("scmd_no_desc")}</div>
         </div>`;
-      const footEl = document.getElementById("ws-detail-foot");
-      if (footEl) {
-        footEl.innerHTML = `
-          <div class="flex gap-2">
-            <button id="detail-translate" class="ws-btn flex-1">${i18n.t("scmd_translate")}</button>
-            <button id="detail-open" class="ws-btn">${i18n.t("scmd_open_workshop")}</button>
-          </div>
-          <div class="flex gap-2">
-            <button id="detail-queue" class="ws-btn ws-btn-add flex-1">${i18n.t("scmd_add_queue")}</button>
-            <button id="detail-install" class="ws-btn ws-btn-primary flex-1">${i18n.t("scmd_install_now")}</button>
-          </div>`;
-      }
-      footEl?.querySelector("#detail-queue")?.addEventListener("click", () => {
-        this.queue.set(id, { id, title: d.title, author: d.author, preview_url: d.preview_url, status: "queued", progress: 0 });
+      footEl.innerHTML = `
+        <div class="flex gap-2">
+          <button id="detail-translate" class="ws-btn flex-1">${i18n.t("scmd_translate")}</button>
+          <button id="detail-open" class="ws-btn">${i18n.t("scmd_open_workshop")}</button>
+        </div>
+        <div class="flex gap-2">
+          <button id="detail-queue" class="ws-btn ws-btn-add flex-1">${i18n.t("scmd_add_queue")}</button>
+          <button id="detail-install" class="ws-btn ws-btn-primary flex-1">${i18n.t("scmd_install_now")}</button>
+        </div>`;
+      footEl.querySelector("#detail-queue")?.addEventListener("click", () => {
+        this.queue.set(id, { id, title: d.title, author: d.author, preview_url: d.preview_url, version: d.version, status: "queued", progress: 0 });
         this.updateBadge();
       });
-      footEl?.querySelector("#detail-install")?.addEventListener("click", async () => {
-        try { await ModService.downloadMod(id); this.onDownloaded(); } catch (err) { this.toast(String(err)); }
+      footEl.querySelector("#detail-install")?.addEventListener("click", async () => {
+        try {
+          await this.runDownload(id);
+          this.onDownloaded();
+        } catch (err) {
+          this.showProgressBar(true, `HATA: ${err}`, "error");
+          setTimeout(() => this.showProgressBar(false, ""), 8000);
+        }
       });
-      footEl?.querySelector("#detail-open")?.addEventListener("click", () => {
+      footEl.querySelector("#detail-open")?.addEventListener("click", () => {
         openUrl(`https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`).catch(() => {});
       });
       // ÇEVİR: dili otomatik algılar; backend başarısızsa tarayıcıda Google Translate açılır
-      const translateBtn = footEl?.querySelector("#detail-translate") as HTMLElement | null;
+      const translateBtn = footEl.querySelector("#detail-translate") as HTMLElement | null;
       const descEl = detailEl.querySelector(".ws-desc") as HTMLElement | null;
       let translated = false;
       let originalDescHtml = descEl?.innerHTML || "";
@@ -286,8 +397,6 @@ class SteamCmdApp {
           console.error("Çeviri hatası:", err);
           descEl.innerHTML = originalDescHtml;
           translateBtn.textContent = i18n.t("scmd_translate");
-          const url = `https://translate.google.com/?sl=auto&tl=${i18n.getCurrentLang() || "tr"}&text=${encodeURIComponent(d.description || d.title || "")}`;
-          try { await openUrl(url); } catch (e) { console.error("Google Translate açılamadı:", e); }
         }
       });
       detailEl.querySelectorAll("[data-shot]").forEach((img) =>
@@ -320,6 +429,7 @@ class SteamCmdApp {
           <div class="flex-1 min-w-0">
             <div class="ws-card-title truncate">${this.escapeHtml(item.title) || item.id}</div>
             <div class="ws-card-author">${item.id}</div>
+            ${item.error ? `<div class="ws-queue-err" title="${this.escapeAttr(item.error)}">${this.escapeHtml(item.error)}</div>` : ""}
           </div>
           ${this.statusLabel(item)}
           ${rmBtn}
@@ -360,13 +470,15 @@ class SteamCmdApp {
       this.renderQueue();
       this.showProgressBar(true, `${i18n.t("scmd_st_connecting")} ${item.id}`, "connecting");
       try {
-        await ModService.downloadMod(item.id);
+        await this.runDownload(item.id);
         item.status = "done";
         item.progress = 100;
+        item.error = undefined;
         this.onDownloaded();
       } catch (err) {
         item.status = "error";
-        this.showProgressBar(true, `${item.id}: ${err}`, "error");
+        item.error = String(err).slice(0, 300);
+        this.showProgressBar(true, `HATA: ${item.error}`, "error");
       }
       this.renderQueue();
       this.updateBadge();
@@ -378,7 +490,9 @@ class SteamCmdApp {
   }
 
   private closeDetail() {
-    document.getElementById("ws-detail-modal")?.classList.add("hidden");
+    document.getElementById("ws-detail")?.classList.add("hidden");
+    const titleEl = document.getElementById("ws-detail-title");
+    if (titleEl) titleEl.textContent = "";
     const content = document.getElementById("ws-detail-content");
     if (content) content.innerHTML = "";
     const foot = document.getElementById("ws-detail-foot");
@@ -446,7 +560,7 @@ class SteamCmdApp {
     try {
       const wid = await this.resolveWorkshop(m);
       this.showProgressBar(true, `Güncelleniyor: ${this.escapeHtml(m.name)} (${wid})`);
-      await ModService.downloadMod(wid);
+      await this.runDownload(wid);
       this.toast(i18n.t("scmd_update_done"));
     } catch (err) {
       this.toast(`${m.name}: ${err}`);
@@ -583,7 +697,12 @@ class SteamCmdApp {
       const fill = bar.querySelector("#steamcmd-progress-bar") as HTMLElement | null;
       const info = bar.querySelector("#steamcmd-progress-info");
       if (fill) fill.style.width = `${Math.min(100, payload.progress)}%`;
-      if (info) info.textContent = `%${Math.round(payload.progress)} (${payload.speed})`;
+      if (info) {
+        // Faz mesajı varsa göster ("Steam'e bağlanılıyor...", "İndiriliyor 1.2/5.7 MB" vb.)
+        info.textContent = payload.message
+          ? `${payload.message}${payload.speed ? ` · ${payload.speed}` : ""} · %${Math.round(payload.progress)}`
+          : `%${Math.round(payload.progress)} (${payload.speed})`;
+      }
     }
     // Sıradaki indirilen öğenin durumunu güncelle
     if (this.currentDownloadId) {

@@ -69,6 +69,15 @@
             </div>
             <div class="flex-1 flex min-h-0">
               <div id="ws-results" class="flex-1 min-w-0 overflow-y-auto p-2 ws-grid"></div>
+              <!-- Sağ detay paneli: karta tıklanınca açılır -->
+              <aside id="ws-detail" class="ws-detail hidden">
+                <div class="ws-detail-head">
+                  <span id="ws-detail-title" class="text-xs font-mono font-bold text-slate-200 truncate"></span>
+                  <button id="ws-detail-close" class="ws-detail-close">✕</button>
+                </div>
+                <div id="ws-detail-content" class="ws-detail-body"></div>
+                <div id="ws-detail-foot" class="ws-detail-foot"></div>
+              </aside>
             </div>
             <div id="ws-pagination" class="scmd-pagination hidden">
               <button id="ws-prev" class="ws-btn" disabled>◀ <span data-i18n="scmd_prev">ÖNCEKİ</span></button>
@@ -83,6 +92,7 @@
           <div id="queue-list" class="flex-1 overflow-y-auto space-y-2"></div>
           <div class="flex gap-2 pt-2 shrink-0">
             <button id="btn-clear-queue" class="px-3 py-2 bg-slate-800 border border-slate-700/50 text-[10px] font-mono hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-100" data-i18n="scmd_clear_queue">KUYRUĞU TEMİZLE</button>
+            <button id="btn-repair-steamcmd" class="hidden px-3 py-2 bg-amber-700/70 border border-amber-600/60 text-[10px] font-mono font-bold hover:bg-amber-600 rounded transition-colors text-white" title="steamcmd cihazda bulundu; yolu ayarlara işle">ONAR</button>
             <button id="btn-download-queue" class="flex-1 px-4 py-2 bg-emerald-700 border border-emerald-600 text-[10px] font-mono font-bold hover:bg-emerald-600 rounded transition-colors text-white" data-i18n="scmd_download_selected">SEÇİLENLERİ İNDİR</button>
           </div>
         </div>
@@ -109,16 +119,25 @@
 
       <!-- İlerleme -->
       <div id="steamcmd-progress" class="hidden shrink-0 mx-3 mb-3 bg-slate-900 border border-slate-800 rounded p-3"></div>
-      <!-- Detay Modalı -->
-      <div id="ws-detail-modal" class="scmd-modal hidden">
+
+      <!-- Yöntem Seçim Modalı -->
+      <div id="method-modal" class="scmd-modal hidden">
         <div class="scmd-modal-backdrop"></div>
-        <div class="scmd-modal-card">
+        <div class="scmd-modal-card" style="width: min(540px, 100%)">
           <div class="scmd-modal-head">
-            <span id="ws-detail-modal-title" class="text-sm font-mono font-bold text-slate-200 truncate"></span>
-            <button id="ws-detail-close" class="scmd-modal-close">✕</button>
+            <span class="text-sm font-mono font-bold text-slate-200">İNDİRME YÖNTEMİ SEÇ</span>
           </div>
-          <div id="ws-detail-content" class="scmd-modal-body"></div>
-          <div id="ws-detail-foot" class="scmd-modal-foot"></div>
+          <div class="scmd-modal-body">
+            <p class="text-[10px] text-slate-500 mb-3 font-mono">Bu seçim bir kez yapılır; ayarlardan değiştirebilirsin.</p>
+            <button id="method-steamcmd" class="method-card">
+              <b>STEAMCMD (OTOMATİK)</b>
+              <span>Tek tıkla arka planda kurulur — yol dahil her şeyi kendisi halleder. ~150 MB, yalnızca bir kez. Hesap gerekmez.</span>
+            </button>
+            <button id="method-steam" class="method-card">
+              <b>STEAM'E BAĞLAN</b>
+              <span>Açık Steam client'ı üzerinden indirir, ek indirme yoktur. Steam açık olmalı ve RimWorld'e sahip olmalısın.</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -13,6 +13,8 @@ export interface WorkshopItem {
   title: string;
   author: string;
   preview_url: string;
+  /** Modun desteklediği en yüksek RimWorld sürümü (ör. "1.6"). Etikette yoksa boş. */
+  version: string;
 }
 
 export interface WorkshopDetails {
@@ -22,6 +24,8 @@ export interface WorkshopDetails {
   preview_url: string;
   screenshots: string[];
   author: string;
+  /** Modun desteklediği en yüksek RimWorld sürümü (ör. "1.6"). Etikette yoksa boş. */
+  version: string;
   file_size: number;
   time_updated: number;
   subscriptions: number;
@@ -89,6 +93,28 @@ export class ModService {
   /** Rastgele bir metin dosyasını yazar (preset dışa aktarma için) */
   static async writeTextFile(path: string, content: string): Promise<void> {
     return safeInvoke<void>("write_text_file", { path, content });
+  }
+
+  /** SteamCMD durumunu çözer: ok / found_elsewhere / missing */
+  static async steamcmdResolve(configuredPath: string): Promise<{ status: string; path: string | null }> {
+    return safeInvoke<{ status: string; path: string | null }>("steamcmd_resolve", { configuredPath });
+  }
+
+  /** SteamCMD'yi tek tıkla indirip kurar (yönetilen klasöre), yolu döndürür. */
+  static async steamcmdSetup(): Promise<string> {
+    return safeInvoke<string>("steamcmd_setup");
+  }
+
+  /** Steam client'ı şu an çalışıyor mu? */
+  static async steamClientAvailable(): Promise<boolean> {
+    return safeInvoke<boolean>("steam_client_available");
+  }
+
+  /** Steam client üzerinden workshop indirme (kullanıcının açık oturumuyla). */
+  static async steamDownloadMod(modId: string): Promise<void> {
+    const { rimworld_mods_path } = settingsStore.getSettings();
+    if (!rimworld_mods_path) throw new Error("RimWorld Mods yolu ayarlı değil.");
+    return safeInvoke<void>("steam_download_mod", { installDir: rimworld_mods_path, modId });
   }
 
   static async downloadMod(modId: string): Promise<void> {
