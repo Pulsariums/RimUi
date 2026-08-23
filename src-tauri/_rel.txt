@@ -1,0 +1,95 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.46
+   Compiling cfg-if v1.0.4
+   Compiling siphasher v1.0.3
+   Compiling serde_core v1.0.228
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_properties_data v2.2.0
+   Compiling icu_normalizer_data v2.2.0
+note: no errors encountered even though delayed bugs were created
+note: those delayed bugs will now be shown as internal compiler errors
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:13:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:14:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:15:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:16:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:17:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:337:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:342:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:347:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:352:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:357:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:362:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:367:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:374:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:379:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:384:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:389:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:394:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:399:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:404:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:411:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:416:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:421:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:426:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:431:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:436:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:441:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:448:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:453:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:458:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:463:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:468:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:473:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:513:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:13:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:14:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:15:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:16:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:17:5: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:397:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:402:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:407:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:412:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:417:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:422:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:427:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:434:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:439:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:444:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:449:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:454:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:459:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:464:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:471:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:476:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:481:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:486:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:491:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:496:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:501:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:508:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:513:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:518:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:523:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:528:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:533:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:573:5: error: internal compiler error: could not resolve trait item being implemented
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\lib.rs:25:13: error: internal compiler error: no resolution for an import
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip.rs:64:14: error: internal compiler error: path with `Res::Err` but no error emitted
+C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\sip128.rs:91:14: error: internal compiler error: path with `Res::Err` but no error emitted
+note: we would appreciate a bug report: https://github.com/rust-lang/rust/issues/new?labels=C-bug%2C+I-ICE%2C+T-compiler&template=ice.md
+
+note: rustc 1.97.0 (2d8144b78 2026-07-07) running on x86_64-pc-windows-msvc
+
+note: compiler flags: --crate-type lib -C embed-bitcode=no -C debug-assertions=off -C strip=symbols
+
+note: some of the compiler flags provided by cargo are hidden
+
+query stack during panic:
+end of query stack
+error: could not compile `siphasher` (lib)
+
+Caused by:
+  process didn't exit successfully: `C:\Users\Pulsar\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin\rustc.exe --crate-name siphasher --edition=2018 C:\Users\Pulsar\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.3\src\lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat,diagnostic-short --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debug-assertions=off --cfg "feature=\"default\"" --cfg "feature=\"std\"" --check-cfg cfg(docsrs,test) --check-cfg "cfg(feature, values(\"default\", \"serde\", \"serde_json\", \"serde_no_std\", \"serde_std\", \"std\"))" -C metadata=f1a499ea0d227bdd -C extra-filename=-522fe336e34e4e2d --out-dir "C:\Users\Pulsar\Desktop\github geliştimeleri\rimwordl başlatıcı\src-tauri\target\release\deps" -C strip=symbols -L "dependency=C:\Users\Pulsar\Desktop\github geliştimeleri\rimwordl başlatıcı\src-tauri\target\release\deps" --cap-lints allow` (exit code: 101)
+warning: build failed, waiting for other jobs to finish...

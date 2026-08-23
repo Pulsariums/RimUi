@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Kodu indir
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Node.js kur + npm cache
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -45,7 +45,13 @@ jobs:
         run: |
           $out = "test-output"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
-          Copy-Item "src-tauri/target/release/tauri-app.exe" "$out/RimWorldForge-test.exe"
+          # rust-toolchain.toml hedef üçlü içerdiğinde çıktı target/<üçlü>/release altına iner;
+          # bu yüzden exe'yi recursive arıyoruz.
+          $exe = Get-ChildItem "src-tauri/target" -Recurse -Filter "tauri-app.exe" -ErrorAction SilentlyContinue |
+                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $exe) { throw "tauri-app.exe bulunamadı!" }
+          Write-Output "Bulunan exe: $($exe.FullName) ($([math]::Round($exe.Length/1MB,1)) MB)"
+          Copy-Item $exe.FullName "$out/RimWorldForge-test.exe"
           Copy-Item "src-tauri/binaries/steam_api64.dll" $out/
           Get-ChildItem $out | Format-Table Name, Length
 
