@@ -127,7 +127,12 @@
                 <div class="shelf-header p-2 flex flex-col shrink-0 gap-1">
                   <div class="flex justify-between items-center">
                     <span data-i18n="library_header" class="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500">KUTUPHANE (PASIFLER)</span>
-                    <span class="text-[10px] font-mono text-slate-600" id="library-count">0 MOD</span>
+                    <span class="flex items-center gap-1">
+                      <span class="text-[10px] font-mono text-slate-600" id="library-count">0 MOD</span>
+                      <button id="btn-refresh-library" data-i18n-title="shelf_refresh_title" title="Listeyi yenile" class="shelf-refresh-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                      </button>
+                    </span>
                   </div>
                   <input id="library-search" type="search" data-i18n="lib_search" placeholder="Kutuphanede ara..." class="shelf-search-input" autocomplete="off">
                   <div class="shelf-loading-bar" id="library-loading" style="display:none">
@@ -139,6 +144,8 @@
                   <div class="shelf-skeleton" id="library-skeleton">
                     <div class="app-loading-spinner"></div>
                     <span data-i18n="loading_mods" class="shelf-skeleton-text">MODLAR YÜKLENİYOR</span>
+                    <span class="shelf-skeleton-stage" id="library-skeleton-stage">AYARLAR OKUNUYOR</span>
+                    <div class="shelf-skeleton-steps" id="library-skeleton-steps"></div>
                   </div>
                 </div>
               </section>
@@ -153,7 +160,12 @@
                 <div class="shelf-header p-2 flex flex-col shrink-0 gap-1">
                   <div class="flex justify-between items-center">
                     <span data-i18n="active_header" class="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500">AKTIF YUKLEME SIRASI</span>
-                    <span class="text-[10px] font-mono text-slate-600" id="active-count">0 MOD</span>
+                    <span class="flex items-center gap-1">
+                      <span class="text-[10px] font-mono text-slate-600" id="active-count">0 MOD</span>
+                      <button id="btn-refresh-active" data-i18n-title="shelf_refresh_title" title="Listeyi yenile" class="shelf-refresh-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                      </button>
+                    </span>
                   </div>
                   <input id="active-search" type="search" data-i18n="active_search" placeholder="Aktifte ara..." class="shelf-search-input" autocomplete="off">
                   <div class="shelf-loading-bar" id="active-loading" style="display:none">
@@ -165,6 +177,8 @@
                   <div class="shelf-skeleton" id="active-skeleton">
                     <div class="app-loading-spinner"></div>
                     <span data-i18n="loading_mods" class="shelf-skeleton-text">MODLAR YÜKLENİYOR</span>
+                    <span class="shelf-skeleton-stage" id="active-skeleton-stage">AYARLAR OKUNUYOR</span>
+                    <div class="shelf-skeleton-steps" id="active-skeleton-steps"></div>
                   </div>
                 </div>
               </section>

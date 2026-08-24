@@ -994,6 +994,61 @@ body {
   letter-spacing: 0.22em;
   color: rgba(179, 93, 45, 0.85);
 }
+/* Skeleton aşama göstergesi — hangi veri alma aşamasında olduğumuzu gösterir */
+.shelf-skeleton-stage {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.shelf-skeleton-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skeleton-step-dot {
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: #334155;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.skeleton-step-dot.done {
+  background: rgba(179, 93, 45, 0.55);
+}
+.skeleton-step-dot.active {
+  background: #b35d2d;
+  box-shadow: 0 0 6px rgba(179, 93, 45, 0.7);
+}
+/* Raf başlığındaki elle yenileme düğmesi */
+.shelf-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 3px;
+  color: #64748b;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.shelf-refresh-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.shelf-refresh-btn:hover {
+  color: #b35d2d;
+  background: rgba(179, 93, 45, 0.12);
+}
+.shelf-refresh-btn.spinning svg {
+  animation: shelf-refresh-spin 0.9s linear infinite;
+}
+@keyframes shelf-refresh-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 .app-loading-spinner.small {
   width: 22px;
   height: 22px;

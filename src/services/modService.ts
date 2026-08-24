@@ -119,16 +119,16 @@ export class ModService {
 
   static async downloadMod(modId: string): Promise<void> {
     const { steamcmd_path, rimworld_mods_path } = settingsStore.getSettings();
-    if (!steamcmd_path) throw new Error("SteamCMD yolu ayarlı değil (Ayarlar → Klasör Yolları).");
+    // steamcmd_path boş olabilir: backend (ensure_steamcmd) yönetilen klasörden
+    // bulur, cihazda arar veya tek tıkla kurar — burada ENGELLEME.
     if (!rimworld_mods_path) throw new Error("RimWorld Mods yolu ayarlı değil.");
-    return safeInvoke<void>("download_mod", { steamcmdPath: steamcmd_path, installDir: rimworld_mods_path, modId });
+    return safeInvoke<void>("download_mod", { steamcmdPath: steamcmd_path || "", installDir: rimworld_mods_path, modId });
   }
 
   static async updateMods(modIds: string[]): Promise<void> {
     const { steamcmd_path, rimworld_mods_path } = settingsStore.getSettings();
-    if (!steamcmd_path) throw new Error("SteamCMD yolu ayarlı değil (Ayarlar → Klasör Yolları).");
     if (!rimworld_mods_path) throw new Error("RimWorld Mods yolu ayarlı değil.");
-    return safeInvoke<void>("update_mods", { steamcmdPath: steamcmd_path, installDir: rimworld_mods_path, modIds });
+    return safeInvoke<void>("update_mods", { steamcmdPath: steamcmd_path || "", installDir: rimworld_mods_path, modIds });
   }
 
   /** Steam Workshop'ta arama (topluluk sayfası scrape, anahtar gerektirmez) */

@@ -155,6 +155,66 @@ class ModStore {
     this.schedulePersistMods();
   }
 
+  /**
+   * Arka plan senkronizasyonu (SteamCMD indirmesi sonrası):
+   * - Diskte yeni beliren modları ekler
+   * - Mevcutların ad/sürüm/yol gibi verilerini tazeler
+   * - Diskten kaldırılmış olanları (harici kaynaklar hariç) listeden düşer
+   * Workspace sırası, profil ve grup düzenini BOZMAZ.
+   */
+  public syncMods(fresh: ModMetadata[]): { added: number; updated: number; removed: number } {
+    const freshMap = new Map(fresh.map(m => [m.package_id.toLowerCase(), m]));
+    let added = 0;
+    let updated = 0;
+    let removed = 0;
+
+    // 1) Yeni modlar
+    const currentIds = new Set(this.mods.map(m => m.package_id.toLowerCase()));
+    const toAdd: ModMetadata[] = [];
+    for (const [id, mod] of freshMap) {
+      if (!currentIds.has(id)) {
+        toAdd.push(mod);
+        added++;
+      }
+    }
+
+    // 2) Silinenler (disken gitmiş, harici kaynak olmayan)
+    this.mods = this.mods.filter(mod => {
+      const id = mod.package_id.toLowerCase();
+      if (mod.isExternal || mod.isDead) return true;
+      if (freshMap.has(id)) return true;
+      removed++;
+      return false;
+    });
+
+    // 3) Güncellenenler — sadece gerçekten değişenleri say
+    this.mods = this.mods.map(mod => {
+      const freshMod = freshMap.get(mod.package_id.toLowerCase());
+      if (!freshMod || mod.isDead) return mod;
+      const changed =
+        mod.name !== freshMod.name ||
+        mod.version !== freshMod.version ||
+        mod.dir_path !== freshMod.dir_path ||
+        JSON.stringify(mod.supported_versions) !== JSON.stringify(freshMod.supported_versions);
+      if (changed) {
+        updated++;
+        return this.normalizeMod({ ...freshMod });
+      }
+      return mod;
+    });
+
+    if (toAdd.length > 0) {
+      this.mods.push(...toAdd.map(m => this.normalizeMod(m)));
+    }
+
+    if (added > 0 || updated > 0 || removed > 0) {
+      this.buildCache();
+      this.notifyMods();
+      this.schedulePersistMods();
+    }
+    return { added, updated, removed };
+  }
+
   /** Modu listeden tamamen kaldır (diskten silme sonrası) */
   public removeMod(packageId: string): void {
     const id = packageId.toLowerCase();

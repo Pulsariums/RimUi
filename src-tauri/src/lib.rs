@@ -130,11 +130,28 @@ fn detect_rimworld_paths() -> DetectedPaths {
 }
 
 /// Command to scan RimWorld mods. Uses the SQLite database cache under the hood.
+/// Tarama ilerlemesini "mods-scan-progress" olayıyla frontend'e iletir
+/// (ana sayfa skeleton aşama göstergesi bu olayla beslenir).
+#[derive(Clone, serde::Serialize)]
+pub struct ScanProgressPayload {
+    pub current: usize,
+    pub total: usize,
+}
+
 #[tauri::command]
-async fn scan_mods(mods_dir: String, db_path: String) -> Result<Vec<ModMetadata>, String> {
+async fn scan_mods(window: tauri::Window, mods_dir: String, db_path: String) -> Result<Vec<ModMetadata>, String> {
     tokio::task::spawn_blocking(move || {
         let engine = CacheEngine::new(&db_path)?;
-        engine.scan_directory(&mods_dir)
+        use tauri::Emitter;
+        // Throttle: her modda değil, en fazla ~7/sn emit (UI gecikmesin)
+        let mut last_emit = std::time::Instant::now() - std::time::Duration::from_secs(1);
+        engine.scan_directory_with_progress(&mods_dir, move |current, total| {
+            let now = std::time::Instant::now();
+            if current == total || now.duration_since(last_emit) >= std::time::Duration::from_millis(150) {
+                last_emit = now;
+                let _ = window.emit("mods-scan-progress", ScanProgressPayload { current, total });
+            }
+        })
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
@@ -383,7 +400,9 @@ async fn download_mod(window: tauri::Window, steamcmd_path: String, install_dir:
 #[tauri::command]
 async fn update_mods(window: tauri::Window, steamcmd_path: String, install_dir: String, mod_ids: Vec<String>) -> Result<Vec<(String, bool)>, String> {
    tokio::task::spawn_blocking(move || {
-       let manager = SteamCmdManager::new(steamcmd_path);
+       // Ayar bozuk/eksikse: yönetilen → cihazda tespit → otomatik kurulum (download_mod ile aynı akış)
+       let exe = steamcmd::ensure_steamcmd(&window, &steamcmd_path)?;
+       let manager = SteamCmdManager::new(exe.to_string_lossy().into_owned());
         manager.update_mods(mod_ids, window, install_dir)
    })
    .await

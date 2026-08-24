@@ -30,6 +30,10 @@ class App {
   private async initApp() {
     console.log("Uygulama baslatildi. Arayuz sifirdan insa edilecek.");
 
+    // Skeleton aşama göstergesini hazırla; ilk aşamayı yaz (AYARLAR OKUNUYOR)
+    this.setupSkeletonStages();
+    this.setLoadStage(0);
+
     const currentSettings = settingsStore.getSettings();
     
     // Varsayılan yollar
@@ -117,12 +121,22 @@ class App {
       };
 
       // Tutarlılık kontrolünü hemen yap (workspace yüklensin)
+      this.setLoadStage(1);
       performConsistencyCheck();
 
+      // Rust tarama ilerlemesini dinle → skeleton'da canlı "x / y" göster
+      listen<{ current: number; total: number }>("mods-scan-progress", (e) => {
+        this.setLoadStage(2, `${e.payload.current} / ${e.payload.total}`);
+      }).catch(() => {});
+
       // Modları chunk chunk yükle (Rust tek seferde gönderir, frontend kademeli işler)
+      this.setLoadStage(2);
       ModService.scanMods(finalSettings.rimworld_mods_path, finalSettings.db_path)
         .then(mods => {
           console.log("[DEBUG main.ts] scanMods sonucu - toplam mod:", mods.length);
+
+          // Veri geldi → son aşama: arayüz inşası (chunk'lar)
+          this.setLoadStage(3);
           
           const chunkSize = 100;
           let index = 0;
@@ -180,6 +194,16 @@ class App {
     // RimSort Watchdog
     this.setupModsConfigWatcher();
 
+    // SteamCMD penceresi indirme bitince yayın yapar → kütüphaneyi arka planda tazele
+    listen("mods-library-changed", () => { void this.refreshLibraryQuiet(); }).catch(() => {});
+
+    // Elle yenileme düğmeleri (kütüphane + aktif rafı) — aynı veri kaynağından yeniden tarar
+    for (const btnId of ["btn-refresh-library", "btn-refresh-active"]) {
+      document.getElementById(btnId)?.addEventListener("click", () => {
+        void this.refreshLibraryQuiet(document.getElementById(btnId));
+      });
+    }
+
     // Ayarlar penceresinden yapılan değişiklikleri ana pencereye yansıt
     this.setupSettingsSync();
 
@@ -207,6 +231,54 @@ class App {
 
     await this.setupUIListeners();
     this.setupSplitters();
+  }
+
+  // ============================================================
+  // SKELETON AŞAMA GÖSTERGESİ
+  // Veri alım hattının hangi aşamada olduğunu iki raftaki
+  // skeleton üzerinde canlı olarak gösterir.
+  // ============================================================
+  private static readonly LOAD_STAGES = [
+    "loading_stage_1", // AYARLAR OKUNUYOR
+    "loading_stage_2", // PROFİL DOGRULANIYOR
+    "loading_stage_3", // MOD KLASORLERI TARANIYOR
+    "loading_stage_4"  // ARAYUZ INSAA EDILIYOR
+  ];
+
+  /** Skeleton'lardaki adım noktalarını (4 aşama) bir kez oluşturur. */
+  private setupSkeletonStages(): void {
+    for (const stepsId of ["library-skeleton-steps", "active-skeleton-steps"]) {
+      const steps = document.getElementById(stepsId);
+      if (!steps) continue;
+      steps.innerHTML = "";
+      for (let i = 0; i < App.LOAD_STAGES.length; i++) {
+        const dot = document.createElement("div");
+        dot.className = "skeleton-step-dot";
+        dot.dataset.step = String(i);
+        steps.appendChild(dot);
+      }
+    }
+  }
+
+  /**
+   * Aktif aşamayı günceller. `detail` varsa (örn. "12 / 48") aşama adına eklenir.
+   * Skeleton DOM'dan kalktıysa sessizce yok sayar.
+   */
+  private setLoadStage(stageIndex: number, detail?: string): void {
+    const stageKey = App.LOAD_STAGES[stageIndex];
+    if (!stageKey) return;
+    const label = detail ? `${i18n.t(stageKey)} · ${detail}` : i18n.t(stageKey);
+    for (const id of ["library-skeleton-stage", "active-skeleton-stage"]) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = label;
+    }
+    for (const stepsId of ["library-skeleton-steps", "active-skeleton-steps"]) {
+      document.querySelectorAll<HTMLDivElement>(`#${stepsId} .skeleton-step-dot`).forEach((dot) => {
+        const idx = Number(dot.dataset.step);
+        dot.classList.toggle("done", idx < stageIndex);
+        dot.classList.toggle("active", idx === stageIndex);
+      });
+    }
   }
 
   /** Gerçek tarama ilerlemesini raf başlıklarındaki çubuklara yansıt (tam ekran yok) */
@@ -251,8 +323,8 @@ class App {
     }, 500);
   }
 
-  // Ayarlar penceresi aynı origin'i paylaştığı için localStorage 'storage' event'i
-  // diğer pencerede setItem yapıldığında tetiklenir.
+  /** Ayarlar penceresi aynı origin'i paylaştığı için localStorage 'storage' event'i
+   * diğer pencerede setItem yapıldığında tetiklenir. */
   private setupSettingsSync() {
     window.addEventListener("storage", (e) => {
       if (e.key === "app_settings") {
@@ -260,6 +332,35 @@ class App {
         console.log("[main.ts] Ayarlar penceresinden güncelleme alındı.");
       }
     });
+  }
+
+  /**
+   * Arka plan kütüphane tazelemesi — SteamCMD penceresinden "mods-library-changed"
+   * eventi gelince çalışır. Skeleton/overlay göstermez; SQLite önbellek sayesinde
+   * hızlıdır, sadece farkları uygular (syncMods).
+   */
+  private refreshingLibrary = false;
+  private async refreshLibraryQuiet(busyEl?: HTMLElement | null): Promise<void> {
+    if (this.refreshingLibrary) return;
+    const s = settingsStore.getSettings();
+    if (!s.rimworld_mods_path || !s.db_path) return;
+    // İlk yükleme hâlâ sürüyorsa karışmasın
+    if (modStore.isLoading()) return;
+    this.refreshingLibrary = true;
+    busyEl?.classList.add("spinning");
+    try {
+      const mods = await ModService.scanMods(s.rimworld_mods_path, s.db_path);
+      const res = modStore.syncMods(mods);
+      if (res.added > 0 || res.removed > 0) {
+        Toast.show(i18n.t("toast_library_sync_added").replace("{n}", String(res.added)), "success");
+      }
+      console.log("[main.ts] Kütüphane arka planda senkronize edildi:", res);
+    } catch (err) {
+      console.warn("[main.ts] Arka plan kütüphane tazelemesi başarısız:", err);
+    } finally {
+      this.refreshingLibrary = false;
+      busyEl?.classList.remove("spinning");
+    }
   }
 
   // RimSort Watchdog: ModsConfig.xml değişikliklerini dinle

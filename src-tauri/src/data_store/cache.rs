@@ -218,6 +218,16 @@ impl CacheEngine {
     /// Scans a directory of mods, utilizing the database cache for extremely fast subsequent reads.
     /// Optimized: checks cache by dir_path BEFORE parsing About.xml.
     pub fn scan_directory<P: AsRef<Path>>(&self, mods_dir: P) -> Result<Vec<ModMetadata>, String> {
+        self.scan_directory_with_progress(mods_dir, |_, _| {})
+    }
+
+    /// scan_directory'nin ilerleme bildirimli sürümü.
+    /// Her mod işlendiğinde `progress(islenen, toplam)` çağrılır (frontend skeleton'ı besler).
+    pub fn scan_directory_with_progress<P, F>(&self, mods_dir: P, mut progress: F) -> Result<Vec<ModMetadata>, String>
+    where
+        P: AsRef<Path>,
+        F: FnMut(usize, usize),
+    {
         let mut results = Vec::new();
         let dir = mods_dir.as_ref();
 
@@ -225,42 +235,49 @@ impl CacheEngine {
             return Ok(results);
         }
 
+        // 1. GEÇİŞ: About.xml içeren mod klasörlerini topla ve toplamı bil
         let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read mods dir: {}", e))?;
+        let mut candidates: Vec<std::path::PathBuf> = Vec::new();
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_dir() {
-                let about_path = path.join("About").join("About.xml");
-                if about_path.exists() {
-                    let metadata = entry.metadata().map_err(|e| e.to_string())?;
-                    let mtime = metadata
-                        .modified()
-                        .unwrap_or(UNIX_EPOCH)
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs();
+            if path.is_dir() && path.join("About").join("About.xml").exists() {
+                candidates.push(path);
+            }
+        }
+        let total = candidates.len();
 
-                    let dir_path_str = path.to_string_lossy().to_string();
+        for (done, path) in candidates.iter().enumerate() {
+            let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
+            let mtime = metadata
+                .modified()
+                .unwrap_or(UNIX_EPOCH)
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
 
-                    // 🔥 ÖNCE: dir_path ile cache'te ara (XML parse'ına gerek yok)
-                    if let Some(cached) = self.get_mod_by_path(&dir_path_str, mtime) {
-                        results.push(cached);
-                        continue; // XML parse'ını TAMAMEN ATLA
-                    }
+            let dir_path_str = path.to_string_lossy().to_string();
 
-                    // Cache miss veya mtime değişmiş → About.xml parse et
-                    match parse_about_xml(&about_path) {
-                        Ok(parsed) => {
-                            let mut to_cache = parsed.clone();
-                            to_cache.dir_path = dir_path_str;
-                            let _ = self.set_mod(&to_cache, mtime);
-                            results.push(to_cache);
-                        }
-                        Err(err) => {
-                            eprintln!("Warning: Skipping mod at {:?}: {}", path, err);
-                        }
-                    }
+            // 🔥 ÖNCE: dir_path ile cache'te ara (XML parse'ına gerek yok)
+            if let Some(cached) = self.get_mod_by_path(&dir_path_str, mtime) {
+                results.push(cached);
+                progress(done + 1, total);
+                continue; // XML parse'ını TAMAMEN ATLA
+            }
+
+            // Cache miss veya mtime değişmiş → About.xml parse et
+            let about_path = path.join("About").join("About.xml");
+            match parse_about_xml(&about_path) {
+                Ok(parsed) => {
+                    let mut to_cache = parsed.clone();
+                    to_cache.dir_path = dir_path_str;
+                    let _ = self.set_mod(&to_cache, mtime);
+                    results.push(to_cache);
+                }
+                Err(err) => {
+                    eprintln!("Warning: Skipping mod at {:?}: {}", path, err);
                 }
             }
+            progress(done + 1, total);
         }
 
         Ok(results)

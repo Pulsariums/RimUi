@@ -1,6 +1,6 @@
 import "../../styles.css";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { listen } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { MODS_CACHE_KEY } from "../../store";
 import { settingsStore } from "../../store/settingsStore";
@@ -148,8 +148,32 @@ class SteamCmdApp {
   /** Seçili yönteme göre indirir. */
   private async runDownload(modId: string): Promise<void> {
     const method = await this.ensureMethod();
-    if (method === "steam") await ModService.steamDownloadMod(modId);
-    else await ModService.downloadMod(modId);
+    if (method === "steam") {
+      await ModService.steamDownloadMod(modId);
+    } else {
+      // İndirme öncesi: bozuk/eksik yolu çöz ve ayarlara işle (backend ensure akışını besler)
+      await this.syncSteamcmdPath();
+      await ModService.downloadMod(modId);
+      // Otomatik kurulduysa yeni yolu kalıcı yap
+      void this.syncSteamcmdPath();
+    }
+  }
+
+  /**
+   * steamcmd_resolve ile yolu çözer; bulunan yol ayardan farklıysa ayarlara kalıcı yazar.
+   * status "missing" ise dokunmaz — backend (ensure_steamcmd) gerekirse otomatik kurar.
+   */
+  private async syncSteamcmdPath(): Promise<void> {
+    try {
+      const settings = settingsStore.getSettings();
+      const res = await ModService.steamcmdResolve(settings.steamcmd_path || "");
+      if (res.status !== "missing" && res.path && res.path !== settings.steamcmd_path) {
+        settingsStore.setSettings({ ...settingsStore.getSettings(), steamcmd_path: res.path });
+        console.info("[SteamCMD] Yol çözüldü ve ayarlara yazıldı:", res.path);
+      }
+    } catch (err) {
+      console.warn("[SteamCMD] Yol çözümleme başarısız (backend yine de deneyecek):", err);
+    }
   }
 
   // --- SteamCMD tespit / onarım ---
@@ -506,6 +530,7 @@ class SteamCmdApp {
     const btn = document.getElementById("btn-update-all") as HTMLButtonElement | null;
     if (btn) btn.disabled = true;
     try {
+      await this.syncSteamcmdPath();
       const numericIds: string[] = [];
       for (const m of this.installed) {
         this.showProgressBar(true, `Çözülüyor: ${this.escapeHtml(m.name)}`);
@@ -573,6 +598,8 @@ class SteamCmdApp {
     this.toast(i18n.t("scmd_download_done"));
     // Yeni indirilen modları Kurulu listesine yansıt
     void this.loadInstalled();
+    // Ana pencereye haber ver → kütüphane arka planda sessizce tazelenir
+    emit("mods-library-changed", {}).catch(() => {});
   }
 
   private async loadInstalled() {
